@@ -1,0 +1,10 @@
+body {
+    background-color: #f2f2f2;
+}
+
+.un_loged_in_message {
+    text-align: center;
+    font-size: 18px;
+    color: #ff0000;
+    margin-top: 20px;
+}
