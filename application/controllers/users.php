@@ -36,14 +36,29 @@ class Users extends CI_Controller
 
     public function register()
     {
-        $this->form_validation->set_rules('first_name', 'First Name', 'required');
-        $this->form_validation->set_rules('last_name', 'Last Name', 'required');
-        $this->form_validation->set_rules('username', 'Username', 'required|is_unique[users.username]');
-        $this->form_validation->set_rules('password', 'Password', 'required|min_length[6]');
+        $this->form_validation->set_rules('first_name', 'First Name', 'required', [
+            'required' => 'The %s field is required.'
+        ]);
+
+        $this->form_validation->set_rules('last_name', 'Last Name', 'required', [
+            'required' => 'The %s field is required.'
+        ]);
+
+        $this->form_validation->set_rules('username', 'Username', 'required|is_unique[users.username]', [
+            'required' => 'The %s field is required.',
+            'is_unique' => 'The %s already exists.'
+        ]);
+
+        $this->form_validation->set_rules('password', 'Password', 'required|min_length[6]', [
+            'required' => 'The %s field is required.',
+            'min_length' => 'The %s must be at least 6 characters long.'
+        ]);
 
         if ($this->form_validation->run() === FALSE) {
+            // Load the form with validation errors
             $this->load->view('users/register_view');
         } else {
+            // Save the user to the database
             $data = [
                 'first_name' => $this->input->post('first_name'),
                 'last_name' => $this->input->post('last_name'),

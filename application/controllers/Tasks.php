@@ -8,13 +8,14 @@ class Tasks extends CI_Controller
         parent::__construct();
         $this->load->model('Task_model');
         $this->load->model('Project_model');
+        $this->load->library('session'); // דרוש ל־flashdata
+        $this->load->library('form_validation');
     }
 
     public function index($project_id)
     {
         $status_filter = $this->input->get('status'); // null / pending / done
         $tasks = $this->Task_model->get_project_tasks($project_id, $status_filter);
-
         $project = $this->Project_model->get_project($project_id);
 
         $data = [
@@ -22,7 +23,8 @@ class Tasks extends CI_Controller
             'tasks' => $tasks,
             'project_id' => $project_id,
             'project' => $project,
-            'status_filter' => $status_filter
+            'status_filter' => $status_filter,
+            'success' => $this->session->flashdata('success') // הצגת הודעת הצלחה
         ];
 
         $this->load->view('layouts/main', $data);
@@ -30,8 +32,6 @@ class Tasks extends CI_Controller
 
     public function add($project_id)
     {
-        $this->load->library('form_validation');
-
         $this->form_validation->set_rules('task_title', 'Task Title', 'required');
         $this->form_validation->set_rules('task_body', 'Task Description', 'required');
 
@@ -51,37 +51,19 @@ class Tasks extends CI_Controller
             ];
 
             $this->Task_model->add_task($task_data);
+
+            // Flash message
+            $this->session->set_flashdata('success', 'Task added successfully!');
             redirect("tasks/index/{$project_id}");
         }
     }
 
-    public function mark_as_done($project_id, $task_id)
-    {
-        $this->Task_model->mark_as_done($project_id, $task_id);
-        redirect("tasks/index/{$project_id}");
-    }
-
-    public function mark_as_un_done($project_id, $task_id)
-    {
-        $this->Task_model->mark_as_un_done($project_id, $task_id);
-        redirect("tasks/index/{$project_id}");
-    }
-
-    public function delete($project_id, $task_id)
-    {
-        $this->Task_model->delete_task($project_id, $task_id);
-        redirect("tasks/index/{$project_id}");
-    }
-
     public function edit($project_id, $task_id)
     {
-        $this->load->library('form_validation');
-
         $task = $this->Task_model->get_task($project_id, $task_id);
 
-        if (!$task) {
+        if (!$task)
             show_404();
-        }
 
         $this->form_validation->set_rules('task_title', 'Task Title', 'required');
         $this->form_validation->set_rules('task_body', 'Task Description', 'required');
@@ -99,8 +81,33 @@ class Tasks extends CI_Controller
             ];
 
             $this->Task_model->update_task($project_id, $task_id, $task_data);
+
+            // Flash message
+            $this->session->set_flashdata('success', 'Task updated successfully!');
             redirect("tasks/index/{$project_id}");
         }
     }
 
+    public function delete($project_id, $task_id)
+    {
+        $this->Task_model->delete_task($project_id, $task_id);
+
+        // Flash message
+        $this->session->set_flashdata('success', 'Task deleted successfully!');
+        redirect("tasks/index/{$project_id}");
+    }
+
+    public function mark_as_done($project_id, $task_id)
+    {
+        $this->Task_model->mark_as_done($project_id, $task_id);
+        $this->session->set_flashdata('success', 'Task marked as done!');
+        redirect("tasks/index/{$project_id}");
+    }
+
+    public function mark_as_un_done($project_id, $task_id)
+    {
+        $this->Task_model->mark_as_un_done($project_id, $task_id);
+        $this->session->set_flashdata('success', 'Task marked as pending!');
+        redirect("tasks/index/{$project_id}");
+    }
 }

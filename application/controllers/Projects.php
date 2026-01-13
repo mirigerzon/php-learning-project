@@ -46,6 +46,8 @@ class Projects extends CI_Controller
             ];
 
             $this->Project_model->add_project($project_data);
+
+            $this->session->set_flashdata('success', 'Project created successfully!');
             redirect('projects');
         }
     }
@@ -76,6 +78,8 @@ class Projects extends CI_Controller
             ];
 
             $this->Project_model->update_project($id, $project_data);
+
+            $this->session->set_flashdata('success', 'Project updated successfully!');
             redirect('projects');
         }
     }
@@ -88,6 +92,8 @@ class Projects extends CI_Controller
         }
 
         $this->Project_model->delete_project($id);
+
+        $this->session->set_flashdata('success', 'Project deleted successfully!');
         redirect('projects');
     }
 }

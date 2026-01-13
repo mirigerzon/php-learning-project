@@ -5,6 +5,13 @@
     <div class="title">
         <h2>My Projects</h2>
     </div>
+
+    <?php if ($this->session->flashdata('success')): ?>
+        <div id="flash-message" class="alert alert-success">
+            <?= $this->session->flashdata('success') ?>
+        </div>
+    <?php endif; ?>
+
     <?php if (!empty($projects)): ?>
         <ul>
             <?php foreach ($projects as $project): ?>
@@ -31,3 +38,14 @@
     </div>
 
 <?php endif; ?>
+
+
+<script>
+    // מחיקת הודעה אחרי 4 שניות
+    setTimeout(function () {
+        var flash = document.getElementById('flash-message');
+        if (flash) {
+            flash.style.display = 'none';
+        }
+    }, 4000);
+</script>

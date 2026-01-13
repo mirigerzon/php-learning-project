@@ -28,6 +28,11 @@
             text-align: center;
             margin-top: 15px;
         }
+
+        .error-msg {
+            font-size: 0.875em;
+            margin-top: 3px;
+        }
     </style>
 </head>
 
@@ -36,56 +41,70 @@
     <div class="register-container">
         <h2>Register</h2>
 
-        <?php if (isset($error))
-            echo '<div class="alert alert-danger">' . $error . '</div>'; ?>
+        <!-- General error message -->
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger"><?= $error ?></div>
+        <?php endif; ?>
 
-        <?php echo form_open('users/register'); ?>
+        <?= form_open('users/register') ?>
 
+        <!-- First Name -->
         <div class="mb-3">
-            <?php echo form_label('First Name'); ?>
-            <?php echo form_input([
+            <?= form_label('First Name') ?>
+            <?= form_input([
                 'name' => 'first_name',
                 'class' => 'form-control',
-                'placeholder' => 'Enter first name'
-            ]); ?>
+                'placeholder' => 'Enter first name',
+                'value' => set_value('first_name')
+            ]) ?>
+            <?= form_error('first_name', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
+        <!-- Last Name -->
         <div class="mb-3">
-            <?php echo form_label('Last Name'); ?>
-            <?php echo form_input([
+            <?= form_label('Last Name') ?>
+            <?= form_input([
                 'name' => 'last_name',
                 'class' => 'form-control',
-                'placeholder' => 'Enter last name'
-            ]); ?>
+                'placeholder' => 'Enter last name',
+                'value' => set_value('last_name')
+            ]) ?>
+            <?= form_error('last_name', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
+        <!-- Username -->
         <div class="mb-3">
-            <?php echo form_label('Username'); ?>
-            <?php echo form_input([
+            <?= form_label('Username') ?>
+            <?= form_input([
                 'name' => 'username',
                 'class' => 'form-control',
-                'placeholder' => 'Enter username'
-            ]); ?>
+                'placeholder' => 'Enter username',
+                'value' => set_value('username')
+            ]) ?>
+            <?= form_error('username', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
+        <!-- Password -->
         <div class="mb-3">
-            <?php echo form_label('Password'); ?>
-            <?php echo form_password([
+            <?= form_label('Password') ?>
+            <?= form_password([
                 'name' => 'password',
                 'class' => 'form-control',
                 'placeholder' => 'Enter password'
-            ]); ?>
+            ]) ?>
+            <?= form_error('password', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
+        <!-- Submit button -->
         <div class="d-grid gap-2">
-            <?php echo form_submit([
+            <?= form_submit([
                 'name' => 'submit',
                 'class' => 'btn btn-primary',
                 'value' => 'Register'
-            ]); ?>
+            ]) ?>
         </div>
 
-        <?php echo form_close(); ?>
+        <?= form_close() ?>
 
         <div class="register-link">
             <p>Already have an account? <a href="<?= base_url('users/login') ?>">Login here</a></p>

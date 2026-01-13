@@ -6,6 +6,12 @@
     <div class="title">
         <h2>Tasks for project: <?= htmlspecialchars($project->project_title) ?></h2>
     </div>
+    <?php if (!empty($success)): ?>
+        <div id="flash-message" class="alert alert-success">
+            <?= $success ?>
+        </div>
+    <?php endif; ?>
+
     <a href="<?= base_url("tasks/add/{$project_id}") ?>" class="btn btn-success" style="margin-bottom:15px;">
         + Add New Task
     </a>
@@ -78,3 +84,13 @@
 
     <a href="<?= base_url('projects') ?>" class="btn btn-default">← Back to Projects</a>
 <?php endif; ?>
+
+<script>
+    // מחיקת הודעה אחרי 4 שניות
+    setTimeout(function () {
+        var flash = document.getElementById('flash-message');
+        if (flash) {
+            flash.style.display = 'none';
+        }
+    }, 4000);
+</script>
