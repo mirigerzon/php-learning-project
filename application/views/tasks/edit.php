@@ -24,6 +24,12 @@
         <textarea name="task_body" id="task_body" class="form-control" rows="5"
             required><?= htmlspecialchars($task->task_body) ?></textarea>
     </div>
+
+    <div class="form-group">
+        <label for="task_due_date">Due Date</label>
+        <input type="date" name="task_due_date" id="task_due_date" class="form-control" value="<?= $task->due_date ?>">
+    </div>
+
     <button type="submit" class="btn btn-primary">Save Changes</button>
     <a href="<?= base_url('/tasks/index/' . $task->project_id) ?>" class="btn btn-default">Cancel</a>
     <?php echo form_close(); ?>

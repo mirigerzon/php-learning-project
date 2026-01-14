@@ -22,7 +22,8 @@ class Users extends CI_Controller
             if ($user && password_verify($password, $user->password)) {
                 $this->session->set_userdata([
                     'user_id' => $user->user_id,
-                    'username' => $user->username
+                    'username' => $user->username,
+                    'is_admin' => (isset($user->is_admin) && $user->is_admin) ? 1 : 0
                 ]);
                 redirect('home');
             } else {
@@ -68,10 +69,11 @@ class Users extends CI_Controller
             ];
 
             $this->User_model->create_user($data);
+            $this->session->set_flashdata('success', 'Registration successful! You can now log in.');
             redirect('home');
         }
     }
-
+    
     public function logout()
     {
         $this->session->sess_destroy();

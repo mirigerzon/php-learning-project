@@ -11,11 +11,22 @@ class Task_model extends CI_Model
             $this->db->where('status', 1);
         } elseif ($status_filter === 'pending') {
             $this->db->where('status', 0);
+        } elseif ($status_filter === 'late') {
+            $this->db->where('status', 0);
+            $this->db->where('due_date <', date('Y-m-d'));
         }
 
         return $this->db->order_by('created_at', 'DESC')
             ->get('tasks')
             ->result();
+    }
+
+    public function get_task_by_id($task_id)
+    {
+        return $this->db
+            ->where('task_id', $task_id)
+            ->get('tasks')
+            ->row();
     }
 
     public function add_task($data)
@@ -63,4 +74,45 @@ class Task_model extends CI_Model
             ->where('project_id', $project_id)
             ->update('tasks', $data);
     }
+
+    public function get_task_images($task_id)
+    {
+
+        return $this->db
+            ->where('task_id', $task_id)
+            ->get('task_images')
+            ->result();
+    }
+
+    public function get_task_image($image_id)
+    {
+        return $this->db
+            ->where('id', $image_id)
+            ->get('task_images')
+            ->row();
+    }
+
+    public function add_task_image($task_id, $image_path)
+    {
+        return $this->db->insert('task_images', [
+            'task_id' => $task_id,
+            'image_path' => $image_path,
+            'uploaded_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+
+    public function delete_task_image($image_id)
+    {
+        return $this->db
+            ->where('id', $image_id)
+            ->delete('task_images');
+    }
+
+    public function count_task_images($task_id)
+    {
+        $count = $this->db->where('task_id', $task_id)
+            ->count_all_results('task_images');
+        return $count;
+    }
+
 }

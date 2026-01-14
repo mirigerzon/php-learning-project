@@ -41,7 +41,12 @@
     <div class="register-container">
         <h2>Register</h2>
 
-        <!-- General error message -->
+        <div id="flash-message">
+            <?php if ($this->session->flashdata('success')): ?>
+                <div class="alert alert-success"><?= $this->session->flashdata('success') ?></div>
+            <?php endif; ?>
+        </div>
+
         <?php if (isset($error)): ?>
             <div class="alert alert-danger"><?= $error ?></div>
         <?php endif; ?>
@@ -114,3 +119,12 @@
 </body>
 
 </html>
+
+<script>
+    setTimeout(function () {
+        var flash = document.getElementById('flash-message');
+        if (flash) {
+            flash.style.display = 'none';
+        }
+    }, 4000);
+</script>

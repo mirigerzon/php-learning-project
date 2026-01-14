@@ -21,6 +21,9 @@
             </div>
             <ul class="nav navbar-nav">
                 <li><a href="<?= base_url('projects') ?>">Projects</a></li>
+                <?php if ($this->session->userdata('is_admin')): ?>
+                    <li><a href="<?= base_url('admin') ?>">Admin</a></li>
+                <?php endif; ?>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <?php if ($this->session->userdata('user_id')): ?>
