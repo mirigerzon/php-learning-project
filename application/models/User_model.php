@@ -52,4 +52,9 @@ class User_model extends CI_Model
         return $this->db->delete('users');
     }
 
+    public function get_all_users()
+    {
+        return $this->db->select('user_id, username')->get('users')->result();
+    }
+
 }

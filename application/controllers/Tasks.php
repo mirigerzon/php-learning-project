@@ -6,15 +6,20 @@ class Tasks extends CI_Controller
     public function __construct()
     {
         parent::__construct();
+
         $this->load->model('Task_model');
         $this->load->model('Project_model');
-        $this->load->library('session'); // דרוש ל־flashdata
-        $this->load->library('form_validation');
+        $this->load->library(['session', 'form_validation']);
+
+        // בדיקת התחברות בסיסית
+        if (!$this->session->user_id) {
+            redirect('users/login');
+        }
     }
 
     public function index($project_id)
     {
-        $status_filter = $this->input->get('status'); // null / pending / done / late
+        $status_filter = $this->input->get('status');
         $tasks = $this->Task_model->get_project_tasks($project_id, $status_filter);
         $project = $this->Project_model->get_project($project_id);
 
@@ -25,28 +30,25 @@ class Tasks extends CI_Controller
         $data = [
             'main_view' => 'tasks/tasks',
             'tasks' => $tasks,
-            'project_id' => $project_id,
             'project' => $project,
-            'status_filter' => $status_filter,
-            'success' => $this->session->flashdata('success') // הצגת הודעת הצלחה
+            'project_id' => $project_id,
+            'status_filter' => $status_filter
         ];
 
         $this->load->view('layouts/main', $data);
     }
 
-    public function view($task_id)
+    public function view($project_id, $task_id)
     {
         $task = $this->Task_model->get_task_by_id($task_id);
-        if (!$task) {
+        if (!$task)
             show_404();
-        }
-
-        $task_images = $this->Task_model->get_task_images($task_id);
 
         $data = [
             'main_view' => 'tasks/task_view',
+            'project_id' => $project_id,
             'task' => $task,
-            'task_images' => $task_images
+            'task_images' => $this->Task_model->get_task_images($task_id)
         ];
 
         $this->load->view('layouts/main', $data);
@@ -54,103 +56,153 @@ class Tasks extends CI_Controller
 
     public function add($project_id)
     {
-        $this->form_validation->set_rules('task_title', 'Task Title', 'required');
-        $this->form_validation->set_rules('task_body', 'Task Description', 'required');
+        $this->form_validation
+            ->set_rules('task_title', 'Task Title', 'required')
+            ->set_rules('task_body', 'Task Description', 'required');
 
         if ($this->form_validation->run() === FALSE) {
-            $data = [
+            $this->load->view('layouts/main', [
                 'main_view' => 'tasks/add',
                 'project_id' => $project_id
-            ];
-            $this->load->view('layouts/main', $data);
-        } else {
-            $task_data = [
-                'project_id' => $project_id,
-                'task_title' => $this->input->post('task_title'),
-                'task_body' => $this->input->post('task_body'),
-                'status' => 0,
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $this->Task_model->add_task($task_data);
-
-            // Flash message
-            $this->session->set_flashdata('success', 'Task added successfully!');
-            redirect("tasks/index/{$project_id}");
+            ]);
+            return;
         }
+
+        $this->Task_model->add_task([
+            'project_id' => $project_id,
+            'task_title' => $this->input->post('task_title'),
+            'task_body' => $this->input->post('task_body'),
+            'due_date' => $this->input->post('task_due_date') ?: null,
+            'status' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $this->session->set_flashdata('success', 'Task added successfully!');
+        redirect("tasks/index/{$project_id}");
     }
+
+    public function add_ajax_form($project_id)
+    {
+        $this->load->view('tasks/add_form', ['project_id' => $project_id]);
+    }
+
+
 
     public function add_ajax($project_id)
     {
-        $this->form_validation->set_rules('task_title', 'Task Title', 'required');
-        $this->form_validation->set_rules('task_body', 'Task Description', 'required');
+        $this->form_validation
+            ->set_rules('task_title', 'Task Title', 'required')
+            ->set_rules('task_body', 'Task Description', 'required');
 
         if ($this->form_validation->run() === FALSE) {
             echo json_encode([
                 'success' => false,
                 'message' => validation_errors('<p>', '</p>')
             ]);
-        } else {
-            $due_date = $this->input->post('task_due_date');
-
-            $task_data = [
-                'project_id' => $project_id,
-                'task_title' => $this->input->post('task_title'),
-                'task_body' => $this->input->post('task_body'),
-                'due_date' => !empty($due_date) ? $due_date : null,
-                'status' => 0,
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $this->Task_model->add_task($task_data);
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Task added successfully!',
-                'redirect' => base_url("/tasks/index/{$project_id}
-                // ") // מוסיפים URL ל־redirect
-            ]);
+            return;
         }
+
+        $task_data = [
+            'project_id' => $project_id,
+            'task_title' => $this->input->post('task_title'),
+            'task_body' => $this->input->post('task_body'),
+            'due_date' => $this->input->post('task_due_date') ?: null,
+            'status' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->Task_model->add_task($task_data);
+        $task_id = $this->db->insert_id();
+
+        // מחזירים שורה מלאה
+        $row_html = '<tr id="task-' . $task_id . '" class="">';
+        $row_html .= '<td>' . htmlspecialchars($task_data['task_title']) . '</td>';
+        $row_html .= '<td>' . nl2br(htmlspecialchars($task_data['task_body'])) . '</td>';
+        $row_html .= '<td>' . date('d/m/Y H:i', strtotime($task_data['created_at'])) . '</td>';
+        $row_html .= '<td>' . ($task_data['due_date'] ?: '-') . '</td>';
+        $row_html .= '<td>0</td>'; // תמונות
+        $row_html .= '<td>
+        <a href="' . base_url("tasks/mark_as_done/{$project_id}/{$task_id}") . '" class="btn btn-primary btn-xs">Mark as done</a>
+        <a href="' . base_url("tasks/view/{$project_id}/{$task_id}") . '" class="btn btn-info btn-xs">View</a>
+        <a href="' . base_url("tasks/delete/{$project_id}/{$task_id}") . '" class="btn btn-danger btn-xs" onclick="return confirm(\'Are you sure?\')">Delete</a>
+    </td>';
+        $row_html .= '</tr>';
+
+        echo json_encode([
+            'success' => true,
+            'html' => $row_html
+        ]);
     }
 
     public function edit($project_id, $task_id)
     {
         $task = $this->Task_model->get_task($project_id, $task_id);
-
         if (!$task)
             show_404();
 
-        $this->form_validation->set_rules('task_title', 'Task Title', 'required');
-        $this->form_validation->set_rules('task_body', 'Task Description', 'required');
+        $this->form_validation
+            ->set_rules('task_title', 'Task Title', 'required')
+            ->set_rules('task_body', 'Task Description', 'required');
 
         if ($this->form_validation->run() === FALSE) {
-            $data = [
-                'main_view' => 'tasks/edit',
-                'task' => $task
-            ];
-            $this->load->view('layouts/main', $data);
-        } else {
-            $due_date = $this->input->post('task_due_date');
-
-            $task_data = [
-                'task_title' => $this->input->post('task_title'),
-                'task_body' => $this->input->post('task_body'),
-                'due_date' => !empty($due_date) ? $due_date : null,
-            ];
-
-            $this->Task_model->update_task($project_id, $task_id, $task_data);
-
-            // Flash message
-            $this->session->set_flashdata('success', 'Task updated successfully!');
-            redirect("tasks/index/{$project_id}");
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'errors' => validation_errors()]);
+                exit;
+            } else {
+                $this->load->view('layouts/main', [
+                    'task' => $task,
+                    'task_images' => $this->Task_model->get_task_images($task_id)
+                ]);
+                return;
+            }
         }
+
+        $this->Task_model->update_task($project_id, $task_id, [
+            'task_title' => $this->input->post('task_title'),
+            'task_body' => $this->input->post('task_body'),
+            'due_date' => $this->input->post('task_due_date') ?: null
+        ]);
+
+        if ($this->input->is_ajax_request()) {
+            echo json_encode(['success' => true]);
+            exit;
+        } else {
+            $this->session->set_flashdata('success', 'Task updated successfully!');
+            redirect("tasks/view/{$project_id}/{$task_id}");
+        }
+    }
+
+    public function edit_ajax_form($project_id, $task_id)
+    {
+        $task = $this->Task_model->get_task($project_id, $task_id);
+        if (!$task)
+            show_404();
+        $this->load->view('tasks/edit_form', ['task' => $task, 'project_id' => $project_id]);
+    }
+
+    public function edit_ajax($project_id, $task_id)
+    {
+        $this->form_validation
+            ->set_rules('task_title', 'Task Title', 'required')
+            ->set_rules('task_body', 'Task Description', 'required');
+
+        if ($this->form_validation->run() === FALSE) {
+            echo json_encode(['success' => false, 'message' => validation_errors()]);
+            return;
+        }
+
+        $this->Task_model->update_task($project_id, $task_id, [
+            'task_title' => $this->input->post('task_title'),
+            'task_body' => $this->input->post('task_body'),
+            'due_date' => $this->input->post('task_due_date') ?: null
+        ]);
+
+        echo json_encode(['success' => true]);
     }
 
     public function delete($project_id, $task_id)
     {
         $this->Task_model->delete_task($project_id, $task_id);
-
-        // Flash message
         $this->session->set_flashdata('success', 'Task deleted successfully!');
         redirect("tasks/index/{$project_id}");
     }
@@ -172,36 +224,34 @@ class Tasks extends CI_Controller
     public function upload_images()
     {
         $task_id = $this->input->post('task_id');
+        if (empty($_FILES['images']['name'][0]))
+            redirect($_SERVER['HTTP_REFERER']);
 
-        if (!empty($_FILES['images']['name'][0])) {
-            $files = $_FILES;
-            $count = count($_FILES['images']['name']);
+        $files = $_FILES['images'];
+        $this->load->library('upload');
 
-            for ($i = 0; $i < $count; $i++) {
-                $_FILES['image']['name'] = $files['images']['name'][$i];
-                $_FILES['image']['type'] = $files['images']['type'][$i];
-                $_FILES['image']['tmp_name'] = $files['images']['tmp_name'][$i];
-                $_FILES['image']['error'] = $files['images']['error'][$i];
-                $_FILES['image']['size'] = $files['images']['size'][$i];
+        for ($i = 0; $i < count($files['name']); $i++) {
+            $_FILES['image'] = [
+                'name' => $files['name'][$i],
+                'type' => $files['type'][$i],
+                'tmp_name' => $files['tmp_name'][$i],
+                'error' => $files['error'][$i],
+                'size' => $files['size'][$i]
+            ];
 
-                $config['upload_path'] = './uploads/tasks/';
-                $config['allowed_types'] = 'jpg|jpeg|png|gif';
-                $config['file_name'] = time() . '_' . $files['images']['name'][$i];
+            $this->upload->initialize([
+                'upload_path' => './uploads/tasks/',
+                'allowed_types' => 'jpg|jpeg|png|gif',
+                'file_name' => time() . '_' . $files['name'][$i]
+            ]);
 
-                $this->load->library('upload');
-                $this->upload->initialize($config);
-
-                if ($this->upload->do_upload('image')) {
-                    $data = $this->upload->data();
-                    $this->Task_model->add_task_image($task_id, 'uploads/tasks/' . $data['file_name']);
-                    $this->session->set_flashdata('success', 'Images uploaded successfully!');
-                } else {
-                    echo $this->upload->display_errors();
-                    exit;
-                }
+            if ($this->upload->do_upload('image')) {
+                $data = $this->upload->data();
+                $this->Task_model->add_task_image($task_id, 'uploads/tasks/' . $data['file_name']);
             }
         }
 
+        $this->session->set_flashdata('success', 'Images uploaded successfully!');
         redirect($_SERVER['HTTP_REFERER']);
     }
 
@@ -220,16 +270,13 @@ class Tasks extends CI_Controller
 
     public function update_due_date($project_id, $task_id)
     {
-        $due_date = $this->input->post('due_date');
-
         $this->Task_model->update_task(
             $project_id,
             $task_id,
-            ['due_date' => $due_date]
+            ['due_date' => $this->input->post('due_date')]
         );
 
         $this->session->set_flashdata('success', 'Due date updated successfully!');
-
-        redirect("tasks/index/{$task_id}");
+        redirect("tasks/view/{$project_id}/{$task_id}");
     }
 }

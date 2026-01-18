@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 </head>
 
 <body>
@@ -21,8 +23,11 @@
             </div>
             <ul class="nav navbar-nav">
                 <li><a href="<?= base_url('projects') ?>">Projects</a></li>
+                <li><a href="<?= base_url('shares') ?>">Shares</a></li>
+                <li><a href="<?= base_url('dashboard') ?>">Dashboard</a></li>
                 <?php if ($this->session->userdata('is_admin')): ?>
                     <li><a href="<?= base_url('admin') ?>">Admin</a></li>
+                    <li><a href="<?= base_url('admin_dashboard') ?>">Admin Dashboard</a></li>
                 <?php endif; ?>
             </ul>
             <ul class="nav navbar-nav navbar-right">
