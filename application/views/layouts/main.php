@@ -26,8 +26,9 @@
                 <li><a href="<?= base_url('shares') ?>">Shares</a></li>
                 <li><a href="<?= base_url('dashboard') ?>">Dashboard</a></li>
                 <?php if ($this->session->userdata('is_admin')): ?>
-                    <li><a href="<?= base_url('admin') ?>">Admin</a></li>
+                    <li><a href="<?= base_url('admin') ?>">Users control</a></li>
                     <li><a href="<?= base_url('admin_dashboard') ?>">Admin Dashboard</a></li>
+                    <li><a href="<?= base_url('admin/projects') ?>">Users Projects</a></li>
                 <?php endif; ?>
             </ul>
             <ul class="nav navbar-nav navbar-right">

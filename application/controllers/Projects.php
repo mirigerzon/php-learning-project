@@ -10,60 +10,97 @@ class Projects extends CI_Controller
         $this->load->model('User_model');
     }
 
+    /* =======================
+       PERMISSION CHECK
+       ======================= */
+    private function require_project_permission($required = 'view')
+    {
+        $user_id = $this->session->userdata('user_id');
+        if (!$user_id) {
+            show_error('Unauthorized', 401);
+        }
+
+        $user = $this->User_model->get_by_id($user_id);
+
+        if (
+            !$user ||
+            !$user->is_admin ||
+            $user->project_permission === null
+        ) {
+            show_error('Forbidden', 403);
+        }
+
+        if ($required === 'edit' && $user->project_permission !== 'edit') {
+            show_error('Forbidden', 403);
+        }
+    }
+
+    /* =======================
+       LIST PROJECTS
+       ======================= */
     public function index()
     {
-        $projects = $this->Project_model->get_user_projects_with_status($this->session->userdata('user_id'));
+        $this->require_project_permission('view');
 
-        // מוסיפים לכל פרויקט את רשימת המשתמשים המשותפים
+        $projects = $this->Project_model
+            ->get_user_projects_with_status($this->session->userdata('user_id'));
+
         foreach ($projects as $project) {
-            $project->shared_users = $this->Project_model->get_project_shares($project->project_id);
+            $project->shared_users =
+                $this->Project_model->get_project_shares($project->project_id);
         }
 
         $data = [
             'main_view' => 'projects/projects',
             'projects' => $projects,
-            'title' => 'My Projects'
+            'title' => 'Projects'
         ];
 
         $this->load->view('layouts/main', $data);
     }
 
+    /* =======================
+       ADD PROJECT
+       ======================= */
     public function add()
     {
-        $this->load->library('form_validation');
+        $this->require_project_permission('edit');
 
+        $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
         $this->form_validation->set_rules('project_body', 'Project Description', 'required');
 
         if ($this->form_validation->run() === FALSE) {
-            // מציג את הטופס
             $data = [
                 'main_view' => 'projects/add',
                 'title' => 'Add New Project'
             ];
             $this->load->view('layouts/main', $data);
-        } else {
-            $project_data = [
-                'user_id' => $this->session->userdata('user_id'),
-                'project_title' => $this->input->post('project_title'),
-                'project_body' => $this->input->post('project_body'),
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $this->Project_model->add_project($project_data);
-
-            $this->session->set_flashdata('success', 'Project created successfully!');
-            redirect('projects');
+            return;
         }
+
+        $this->Project_model->add_project([
+            'user_id' => $this->session->userdata('user_id'),
+            'project_title' => $this->input->post('project_title'),
+            'project_body' => $this->input->post('project_body'),
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $this->session->set_flashdata('success', 'Project created successfully!');
+        redirect('projects');
     }
 
     public function add_ajax_form()
     {
+        $this->require_project_permission('edit');
         $this->load->view('projects/add_form');
     }
 
     public function add_ajax()
     {
+        $this->require_project_permission('edit');
+
+        $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
         $this->form_validation->set_rules('project_body', 'Project Description', 'required');
 
@@ -72,41 +109,35 @@ class Projects extends CI_Controller
                 'success' => false,
                 'message' => validation_errors('<p>', '</p>')
             ]);
-        } else {
-            $project_data = [
-                'user_id' => $this->session->userdata('user_id'),
-                'project_title' => $this->input->post('project_title'),
-                'project_body' => $this->input->post('project_body'),
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $this->Project_model->add_project($project_data);
-            $project_id = $this->db->insert_id();
-            ob_clean();
-            echo json_encode([
-                'success' => true,
-                'message' => 'Project added successfully!',
-                'project_id' => $project_id
-            ]);
-            exit;
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Project added successfully!',
-                'project_id' => $project_id
-            ]);
+            return;
         }
+
+        $this->Project_model->add_project([
+            'user_id' => $this->session->userdata('user_id'),
+            'project_title' => $this->input->post('project_title'),
+            'project_body' => $this->input->post('project_body'),
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'project_id' => $this->db->insert_id()
+        ]);
     }
 
+    /* =======================
+       EDIT PROJECT
+       ======================= */
     public function edit($id)
     {
-        $this->load->library('form_validation');
+        $this->require_project_permission('edit');
 
         $project = $this->Project_model->get_project($id);
         if (!$project) {
             show_404();
         }
 
+        $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
         $this->form_validation->set_rules('project_body', 'Project Description', 'required');
 
@@ -117,21 +148,22 @@ class Projects extends CI_Controller
                 'project' => $project
             ];
             $this->load->view('layouts/main', $data);
-        } else {
-            $project_data = [
-                'project_title' => $this->input->post('project_title'),
-                'project_body' => $this->input->post('project_body')
-            ];
-
-            $this->Project_model->update_project($id, $project_data);
-
-            $this->session->set_flashdata('success', 'Project updated successfully!');
-            redirect('projects');
+            return;
         }
+
+        $this->Project_model->update_project($id, [
+            'project_title' => $this->input->post('project_title'),
+            'project_body' => $this->input->post('project_body')
+        ]);
+
+        $this->session->set_flashdata('success', 'Project updated successfully!');
+        redirect('projects');
     }
 
     public function edit_ajax_form($project_id)
     {
+        $this->require_project_permission('edit');
+
         $project = $this->Project_model->get_project($project_id);
         if (!$project) {
             echo 'Project not found.';
@@ -143,6 +175,9 @@ class Projects extends CI_Controller
 
     public function edit_ajax($project_id)
     {
+        $this->require_project_permission('edit');
+
+        $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
         $this->form_validation->set_rules('project_body', 'Project Description', 'required');
 
@@ -151,63 +186,62 @@ class Projects extends CI_Controller
                 'success' => false,
                 'message' => validation_errors('<p>', '</p>')
             ]);
-        } else {
-            $project_data = [
-                'project_title' => $this->input->post('project_title'),
-                'project_body' => $this->input->post('project_body')
-            ];
-
-            $this->Project_model->update_project($project_id, $project_data);
-
-            echo json_encode([
-                'success' => true,
-                'project_id' => $project_id,
-                'project_title' => $project_data['project_title'],
-                'project_body' => $project_data['project_body']
-            ]);
+            return;
         }
+
+        $this->Project_model->update_project($project_id, [
+            'project_title' => $this->input->post('project_title'),
+            'project_body' => $this->input->post('project_body')
+        ]);
+
+        echo json_encode([
+            'success' => true
+        ]);
     }
 
+    /* =======================
+       DELETE PROJECT
+       ======================= */
     public function delete($id)
     {
+        $this->require_project_permission('edit');
+
         $project = $this->Project_model->get_project($id);
         if (!$project) {
             show_404();
         }
 
         $this->Project_model->delete_project($id);
-
         $this->session->set_flashdata('success', 'Project deleted successfully!');
         redirect('projects');
     }
 
+    /* =======================
+       SHARE PROJECT
+       ======================= */
     public function share_ajax_form($project_id = null)
     {
+        $this->require_project_permission('edit');
+
         if (!$project_id) {
-            show_error("Project ID is missing!");
-            return;
+            show_error('Project ID missing');
         }
 
         $data['project_id'] = $project_id;
-        $data['users'] = $this->Project_model->get_users_with_roles($project_id);
+        $data['users'] =
+            $this->Project_model->get_users_with_roles($project_id);
 
         $this->load->view('projects/share_ajax_form', $data);
     }
 
     public function share_ajax()
     {
-        if (!$this->session->user_id) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ]);
-            return;
-        }
+        $this->require_project_permission('edit');
 
         $project_id = $this->input->post('project_id');
         $roles = $this->input->post('roles');
 
-        if (!$project_id || !$roles || !is_array($roles)) {
+        if (!$project_id || !is_array($roles)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Missing data'
@@ -215,25 +249,10 @@ class Projects extends CI_Controller
             return;
         }
 
-        $errors = [];
         foreach ($roles as $user_id => $role) {
-            $result = $this->Project_model->share_project($project_id, $user_id, $role);
-            if ($result === false) {
-                $errors[] = "Failed to update for user $user_id";
-            }
+            $this->Project_model->share_project($project_id, $user_id, $role);
         }
 
-        if (!empty($errors)) {
-            echo json_encode([
-                'success' => false,
-                'message' => implode(', ', $errors)
-            ]);
-        } else {
-            echo json_encode([
-                'success' => true
-            ]);
-        }
+        echo json_encode(['success' => true]);
     }
 }
-
-

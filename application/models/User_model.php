@@ -57,4 +57,9 @@ class User_model extends CI_Model
         return $this->db->select('user_id, username')->get('users')->result();
     }
 
+    public function set_project_permission($user_id, $permission)
+    {
+        $this->db->where('user_id', $user_id);
+        return $this->db->update('users', ['project_permission' => $permission]);
+    }
 }

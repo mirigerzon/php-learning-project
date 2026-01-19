@@ -5,6 +5,14 @@ class Task_model extends CI_Model
 {
     public function get_project_tasks($project_id, $status_filter = null)
     {
+        // מביאים קודם את owner_id של הפרויקט
+        $project = $this->db->select('user_id')  // או owner_id לפי איך שהטבלה בנויה
+            ->where('project_id', $project_id)
+            ->get('projects')
+            ->row();
+
+        $owner_id = $project->user_id ?? null;
+
         $this->db->where('project_id', $project_id);
 
         if ($status_filter === 'done') {
@@ -16,10 +24,18 @@ class Task_model extends CI_Model
             $this->db->where('due_date <', date('Y-m-d'));
         }
 
-        return $this->db->order_by('created_at', 'DESC')
+        $tasks = $this->db->order_by('created_at', 'DESC')
             ->get('tasks')
             ->result();
+
+        // מוסיפים לכל משימה את owner_id של הפרויקט
+        foreach ($tasks as $task) {
+            $task->project_owner_id = $owner_id;
+        }
+
+        return $tasks;
     }
+
 
     public function get_task_by_id($task_id)
     {

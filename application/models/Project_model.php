@@ -182,4 +182,13 @@ class Project_model extends CI_Model
         return $this->db->query($sql, [$user_id, $user_id])->result_array();
     }
 
+    public function get_all_projects_with_owner()
+    {
+        $this->db->select('p.*, u.username AS owner_name');
+        $this->db->from('projects p');
+        $this->db->join('users u', 'u.user_id = p.user_id', 'left');
+        $this->db->order_by('p.created_at', 'DESC');
+        return $this->db->get()->result();
+    }
+
 }

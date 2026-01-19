@@ -20,6 +20,7 @@
                 <th>Completed projects</th>
                 <th>In-progress projects</th>
                 <th>Admin</th>
+                <th>Projects permission</th>
             </tr>
         </thead>
         <tbody>
@@ -49,6 +50,16 @@
                             </form>
                         <?php endif; ?>
                     </td>
+                    <td>
+                        <?php if ($u->is_admin): ?>
+                            <select class="form-select form-select-sm project-permission" data-user-id="<?= $u->user_id ?>">
+                                <option value="view" <?= $u->project_permission === 'view' ? 'selected' : '' ?>>View</option>
+                                <option value="edit" <?= $u->project_permission === 'edit' ? 'selected' : '' ?>>Edit</option>
+                            </select>
+                        <?php else: ?>
+                            <span class="text-muted">No Permission</span>
+                        <?php endif; ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
@@ -62,10 +73,26 @@
         }
         return false;
     }
-</script>
 
+    $(document).ready(function () {
+        $('.project-permission').change(function () {
+            const userId = $(this).data('user-id');
+            const permission = $(this).val();
 
-<script>
+            $.post('<?= base_url("admin/set_project_permission_ajax") ?>', {
+                user_id: userId,
+                permission: permission
+            }, function (res) {
+                if (res.success) {
+                    $('#flash-message').html(`<div class="alert alert-success">Permission updated successfully</div>`);
+                } else {
+                    $('#flash-message').html(`<div class="alert alert-danger">${res.message}</div>`);
+                }
+                setTimeout(() => $('#flash-message').empty(), 4000);
+            }, 'json');
+        });
+    });
+
     setTimeout(function () {
         var flash = document.getElementById('flash-message');
         if (flash) {

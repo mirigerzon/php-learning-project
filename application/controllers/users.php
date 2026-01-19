@@ -23,7 +23,8 @@ class Users extends CI_Controller
                 $this->session->set_userdata([
                     'user_id' => $user->user_id,
                     'username' => $user->username,
-                    'is_admin' => (isset($user->is_admin) && $user->is_admin) ? 1 : 0
+                    'is_admin' => (isset($user->is_admin) && $user->is_admin) ? 1 : 0,
+                    'project_permission' => $user->project_permission ?? null,
                 ]);
                 redirect('home');
             } else {
@@ -73,7 +74,7 @@ class Users extends CI_Controller
             redirect('home');
         }
     }
-    
+
     public function logout()
     {
         $this->session->sess_destroy();
