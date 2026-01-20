@@ -12,73 +12,76 @@
             No projects found.
         </div>
     <?php else: ?>
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Title</th>
-                    <th>Owner</th>
-                    <th>Created</th>
-                    <th>Shared with</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($projects as $p): ?>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
                     <tr>
-                        <td>
-                            <?= (int) $p->project_id ?>
-                        </td>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Owner</th>
+                        <th>Created</th>
+                        <th>Shared with</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($projects as $p): ?>
+                        <tr>
+                            <td>
+                                <?= (int) $p->project_id ?>
+                            </td>
 
-                        <td>
-                            <strong>
-                                <?= htmlspecialchars($p->project_title) ?>
-                            </strong>
-                        </td>
+                            <td>
+                                <strong>
+                                    <?= htmlspecialchars($p->project_title) ?>
+                                </strong>
+                            </td>
 
-                        <td>
-                            <?= htmlspecialchars($p->owner_name ?? '—') ?>
-                        </td>
+                            <td>
+                                <?= htmlspecialchars($p->owner_name == $this->session->userdata('username') ? 'you' : $p->owner_name ?? '-') ?>
+                            </td>
 
-                        <td>
-                            <?= date('d/m/Y', strtotime($p->created_at)) ?>
-                        </td>
+                            <td>
+                                <?= date('d/m/Y', strtotime($p->created_at)) ?>
+                            </td>
 
-                        <td>
-                            <?= !empty($p->shared_users)
-                                ? count($p->shared_users)
-                                : 0 ?>
-                        </td>
+                            <td>
+                                <?= !empty($p->shared_users)
+                                    ? count($p->shared_users)
+                                    : 0 ?>
+                            </td>
 
-                        <td>
-                            <!-- VIEW -->
-                            <a href="<?= base_url('tasks/index/' . $p->project_id) ?>" class="btn btn-sm btn-outline-secondary">
-                                View
-                            </a>
-
-                            <?php if ($this->session->userdata('project_permission') === 'edit'): ?>
-
-                                <a href="<?= base_url('projects/edit/' . $p->project_id) ?>" class="btn btn-sm btn-primary">
-                                    Edit
+                            <td>
+                                <!-- VIEW -->
+                                <a href="<?= base_url('tasks/index/' . $p->project_id) ?>"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    View
                                 </a>
 
-                                <button class="btn btn-sm btn-warning share-project" data-id="<?= (int) $p->project_id ?>">
-                                    Share
-                                </button>
+                                <?php if ($this->session->userdata('project_permission') === 'edit'): ?>
 
-                                <form method="post" action="<?= base_url('projects/delete/' . $p->project_id) ?>"
-                                    style="display:inline" onsubmit="return confirmDelete();">
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        Delete
+                                    <a href="<?= base_url('projects/edit/' . $p->project_id) ?>" class="btn btn-sm btn-primary">
+                                        Edit
+                                    </a>
+
+                                    <button class="btn btn-sm btn-warning share-project" data-id="<?= (int) $p->project_id ?>">
+                                        Share
                                     </button>
-                                </form>
 
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                                    <form method="post" action="<?= base_url('projects/delete/' . $p->project_id) ?>"
+                                        style="display:inline" onsubmit="return confirmDelete();">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     <?php endif; ?>
 </div>
 

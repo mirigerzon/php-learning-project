@@ -4,7 +4,7 @@
         <a href="<?= base_url('users/login') ?>">here</a>.
     </h2>
 <?php else: ?>
-    <div style="display: flex; gap: 20px;">
+    <div class="projects-container" style="display: flex; gap: 20px;">
         <!-- עמודת רשימת הפרויקטים (שמאל) -->
         <div style="flex: 2;">
             <div class="title">
@@ -21,39 +21,41 @@
                 <button id="show-add-form" class="btn btn-success">Add New Project</button>
             </div>
 
-            <table id="projects-table" class="display" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($projects)): ?>
-                        <?php foreach ($projects as $project): ?>
-                            <tr id="project-<?= $project->project_id ?>">
-                                <td><?= htmlspecialchars($project->project_title) ?></td>
-                                <td><?= htmlspecialchars($project->project_body) ?></td>
-                                <td>
-                                    <span
-                                        class="badge <?= $project->project_status == 'Open' ? 'badge-success' : 'badge-secondary' ?>">
-                                        <?= $project->project_status ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="#" class="edit-project" data-id="<?= $project->project_id ?>">Edit</a> |
-                                    <a href="<?= base_url("projects/delete/{$project->project_id}") ?>"
-                                        onclick="return confirm('Are you sure?')">Delete</a> |
-                                    <a href="<?= base_url("tasks/index/{$project->project_id}") ?>">View Tasks</a> |
-                                    <a href="#" class="share-project" data-id="<?= $project->project_id ?>">Share</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table id="projects-table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($projects)): ?>
+                            <?php foreach ($projects as $project): ?>
+                                <tr id="project-<?= $project->project_id ?>">
+                                    <td><?= htmlspecialchars($project->project_title) ?></td>
+                                    <td><?= htmlspecialchars($project->project_body) ?></td>
+                                    <td>
+                                        <span
+                                            class="badge <?= $project->project_status == 'Open' ? 'badge-success' : 'badge-secondary' ?>">
+                                            <?= $project->project_status ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="edit-project" data-id="<?= $project->project_id ?>">Edit</a> |
+                                        <a href="<?= base_url("projects/delete/{$project->project_id}") ?>"
+                                            onclick="return confirm('Are you sure?')">Delete</a> |
+                                        <a href="<?= base_url("tasks/index/{$project->project_id}") ?>">View Tasks</a> |
+                                        <a href="#" class="share-project" data-id="<?= $project->project_id ?>">Share</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- עמודה אחת לטופס הוספה/עריכה -->
@@ -98,6 +100,7 @@
 
         // אתחול DataTable
         var projectsTable = $('#projects-table').DataTable({
+            "responsive": true,
             "order": [[0, 'asc']],
             "paging": true,
             "pageLength": 10
@@ -105,13 +108,19 @@
 
         // ------------------ ADD PROJECT ------------------
         $('#show-add-form').on('click', function () {
+            console.log('Add form button clicked');
             $.get('<?= base_url("projects/add_ajax_form") ?>', function (html) {
+                console.log('Add form loaded:', html);
                 $('#project-form-container').html(html);
+            }).fail(function (xhr, status, error) {
+                console.error('Add form failed:', status, error);
+                alert('Error loading add form: ' + error);
             });
         });
 
         $(document).on('submit', '#add-project-form', function (e) {
             e.preventDefault();
+            console.log('Add form submitted');
             $.ajax({
                 url: '<?= base_url("projects/add_ajax") ?>',
                 type: 'POST',
@@ -127,7 +136,8 @@
                         <td>
                             <a href="#" class="edit-project" data-id="${response.project_id}">Edit</a> |
                             <a href="<?= base_url("projects/delete/") ?>${response.project_id}" onclick="return confirm('Are you sure?')">Delete</a> |
-                            <a href="<?= base_url("tasks/index/") ?>${response.project_id}">View Tasks</a>
+                            <a href="<?= base_url("tasks/index/") ?>${response.project_id}">View Tasks</a> |
+                            <a href="#" class="share-project" data-id="${response.project_id}">Share</a>
                         </td>
                     </tr>
                     `;
@@ -136,6 +146,10 @@
                     } else {
                         alert(response.message);
                     }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Add AJAX failed:', status, error);
+                    alert('Error adding project: ' + error);
                 }
             });
         });
@@ -148,14 +162,20 @@
         $(document).on('click', '.edit-project', function (e) {
             e.preventDefault();
             let id = $(this).data('id');
+            console.log('Edit project clicked, id:', id);
             $.get('<?= base_url("projects/edit_ajax_form/") ?>' + id, function (html) {
+                console.log('Edit form loaded:', html);
                 $('#project-form-container').html(html);
+            }).fail(function (xhr, status, error) {
+                console.error('Edit form failed:', status, error);
+                alert('Error loading edit form: ' + error);
             });
         });
 
         $(document).on('submit', '#edit-project-form', function (e) {
             e.preventDefault();
             let id = $(this).data('id');
+            console.log('Edit form submitted, id:', id);
             $.ajax({
                 url: '<?= base_url("projects/edit_ajax/") ?>' + id,
                 type: 'POST',
@@ -164,21 +184,25 @@
                 success: function (response) {
                     if (response.success) {
                         let updatedRow = `
-                    <td>${response.project_title}</td>
-                    <td>${response.project_body}</td>
+                    <td>${$('#project_title').val()}</td>
+                    <td>${$('#project_body').val()}</td>
                     <td><span class="badge badge-success">Open</span></td>
                     <td>
-                        <a href="#" class="edit-project" data-id="${response.project_id}">Edit</a> |
-                        <a href="<?= base_url("projects/delete/") ?>${response.project_id}" onclick="return confirm('Are you sure?')">Delete</a> |
-                        <a href="<?= base_url("tasks/add/") ?>${response.project_id}">Add Task</a> |
-                        <a href="<?= base_url("tasks/index/") ?>${response.project_id}">View Tasks</a>
+                        <a href="#" class="edit-project" data-id="${id}">Edit</a> |
+                        <a href="<?= base_url("projects/delete/") ?>${id}" onclick="return confirm('Are you sure?')">Delete</a> |
+                        <a href="<?= base_url("tasks/index/") ?>${id}">View Tasks</a> |
+                        <a href="#" class="share-project" data-id="${id}">Share</a>
                     </td>
                     `;
-                        projectsTable.row($('#project-' + response.project_id)).data($(updatedRow)).draw(false);
+                        projectsTable.row($('#project-' + id)).data($(updatedRow)).draw(false);
                         $('#project-form-container').html('');
                     } else {
                         alert(response.message);
                     }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Edit AJAX failed:', status, error);
+                    alert('Error updating project: ' + error);
                 }
             });
         });

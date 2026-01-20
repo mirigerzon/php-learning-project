@@ -11,36 +11,11 @@ class Projects extends CI_Controller
     }
 
     /* =======================
-       PERMISSION CHECK
-       ======================= */
-    private function require_project_permission($required = 'view')
-    {
-        $user_id = $this->session->userdata('user_id');
-        if (!$user_id) {
-            show_error('Unauthorized', 401);
-        }
-
-        $user = $this->User_model->get_by_id($user_id);
-
-        if (
-            !$user ||
-            !$user->is_admin ||
-            $user->project_permission === null
-        ) {
-            show_error('Forbidden', 403);
-        }
-
-        if ($required === 'edit' && $user->project_permission !== 'edit') {
-            show_error('Forbidden', 403);
-        }
-    }
-
-    /* =======================
        LIST PROJECTS
        ======================= */
     public function index()
     {
-        $this->require_project_permission('view');
+        $this->require_project_permission(null, 'view');
 
         $projects = $this->Project_model
             ->get_user_projects_with_status($this->session->userdata('user_id'));
@@ -64,7 +39,7 @@ class Projects extends CI_Controller
        ======================= */
     public function add()
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission(null, 'edit');
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
@@ -92,13 +67,13 @@ class Projects extends CI_Controller
 
     public function add_ajax_form()
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission(null, 'edit');
         $this->load->view('projects/add_form');
     }
 
     public function add_ajax()
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission(null, 'edit');
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
@@ -130,7 +105,7 @@ class Projects extends CI_Controller
        ======================= */
     public function edit($id)
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission($id, 'edit');
 
         $project = $this->Project_model->get_project($id);
         if (!$project) {
@@ -162,7 +137,7 @@ class Projects extends CI_Controller
 
     public function edit_ajax_form($project_id)
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission($project_id, 'edit');
 
         $project = $this->Project_model->get_project($project_id);
         if (!$project) {
@@ -175,7 +150,7 @@ class Projects extends CI_Controller
 
     public function edit_ajax($project_id)
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission($project_id, 'edit');
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
@@ -204,7 +179,7 @@ class Projects extends CI_Controller
        ======================= */
     public function delete($id)
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission($id, 'edit');
 
         $project = $this->Project_model->get_project($id);
         if (!$project) {
@@ -221,7 +196,7 @@ class Projects extends CI_Controller
        ======================= */
     public function share_ajax_form($project_id = null)
     {
-        $this->require_project_permission('edit');
+        $this->require_project_permission($project_id, 'edit');
 
         if (!$project_id) {
             show_error('Project ID missing');
@@ -236,9 +211,10 @@ class Projects extends CI_Controller
 
     public function share_ajax()
     {
-        $this->require_project_permission('edit');
 
         $project_id = $this->input->post('project_id');
+        $this->require_project_permission($project_id, 'edit');
+
         $roles = $this->input->post('roles');
 
         if (!$project_id || !is_array($roles)) {
@@ -255,4 +231,51 @@ class Projects extends CI_Controller
 
         echo json_encode(['success' => true]);
     }
+
+    private function require_project_permission($project_id = null, $required = 'view')
+    {
+        $user_id = $this->session->userdata('user_id');
+        if (!$user_id) {
+            show_error('Unauthorized', 401);
+        }
+
+        $user = $this->User_model->get_by_id($user_id);
+        if (!$user) {
+            show_error('Unauthorized', 401);
+        }
+
+        // אדמין – תמיד מותר
+        if ($user->is_admin && $user->project_permission === 'edit') {
+            return;
+        }
+
+        // פעולות כלליות (רשימת פרויקטים, הוספה)
+        if ($project_id === null) {
+            return;
+        }
+
+        // בדיקת בעלות
+        $project = $this->Project_model->get_project($project_id);
+        if (!$project) {
+            show_404();
+        }
+
+        if ($project->user_id == $user_id) {
+            return;
+        }
+
+        // בדיקת שיתוף
+        $permission =
+            $this->Project_model->get_user_project_permission($project_id, $user_id);
+
+        if (!$permission) {
+            show_error('Forbidden', 403);
+        }
+
+        if ($required === 'edit' && $permission !== 'edit') {
+            show_error('Forbidden', 403);
+        }
+    }
+
+
 }

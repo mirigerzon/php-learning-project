@@ -9,4 +9,45 @@ body {
     margin-top: 20px;
 }
 
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .projects-container {
+        flex-direction: column !important;
+    }
 
+    .projects-container>div {
+        width: 100% !important;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .modal-dialog {
+        margin: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .table-responsive {
+        border: none;
+    }
+
+    .navbar-nav {
+        margin: 0;
+    }
+
+    .navbar-nav>li {
+        float: none;
+        display: block;
+    }
+
+    .navbar-nav>li>a {
+        padding: 10px 15px;
+        border-bottom: 1px solid #ddd;
+    }
+}

@@ -43,64 +43,66 @@
         <?php if (empty($tasks)): ?>
             <p>No tasks found for this project.</p>
         <?php else: ?>
-            <table id="tasks-table" class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>Task Title</th>
-                        <th>Description</th>
-                        <th>Created At</th>
-                        <th>Due Date</th>
-                        <th>Images</th>
-                        <?php if ($can_edit): ?>
-                            <th>Actions</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($tasks as $task): ?>
-                        <?php
-                        $is_done = (int) $task->status === 1;
-                        $is_late = !$is_done && !empty($task->due_date) && $task->due_date < date('Y-m-d');
-                        $row_class = $is_done ? 'task-done' : ($is_late ? 'task-late' : '');
-                        ?>
-                        <tr id="task-<?= $task->task_id ?>" class="<?= $row_class ?>">
-                            <td>
-                                <?= htmlspecialchars($task->task_title) ?>
-                                <?php if ($is_done): ?>
-                                    <span class="badge badge-success">Done</span>
-                                <?php elseif ($is_late): ?>
-                                    <span class="badge badge-danger" style="background-color: #f38e96;">Late</span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= nl2br(htmlspecialchars($task->task_body)) ?></td>
-                            <td><?= date('d/m/Y H:i', strtotime($task->created_at)) ?></td>
-                            <td><?= $task->due_date ?: '-' ?></td>
-                            <td><?= $task->image_count ?></td>
-
+            <div class="table-responsive">
+                <table id="tasks-table" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Task Title</th>
+                            <th>Description</th>
+                            <th>Created At</th>
+                            <th>Due Date</th>
+                            <th>Images</th>
                             <?php if ($can_edit): ?>
-                                <td>
-                                    <?php if (!$is_done): ?>
-                                        <a href="<?= base_url("tasks/mark_as_done/{$task->project_id}/{$task->task_id}") ?>"
-                                            class="btn btn-primary btn-xs">Mark as done</a>
-                                    <?php else: ?>
-                                        <a href="<?= base_url("tasks/mark_as_un_done/{$task->project_id}/{$task->task_id}") ?>"
-                                            class="btn btn-primary btn-xs">Mark as un done</a>
-                                    <?php endif; ?>
-                                    <a href="<?= base_url("tasks/view/{$task->project_id}/{$task->task_id}") ?>"
-                                        class="btn btn-info btn-xs">View</a>
-                                    <a href="<?= base_url("tasks/delete/{$task->project_id}/{$task->task_id}") ?>"
-                                        class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')">Delete</a>
-                                </td>
-                            <?php elseif ($project_permission === 'view'): ?>
-                                <td>
-                                    <a href="<?= base_url("tasks/view/{$task->project_id}/{$task->task_id}") ?>"
-                                        class="btn btn-info btn-xs">View</a>
-                                </td>
+                                <th>Actions</th>
                             <?php endif; ?>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($tasks as $task): ?>
+                            <?php
+                            $is_done = (int) $task->status === 1;
+                            $is_late = !$is_done && !empty($task->due_date) && $task->due_date < date('Y-m-d');
+                            $row_class = $is_done ? 'task-done' : ($is_late ? 'task-late' : '');
+                            ?>
+                            <tr id="task-<?= $task->task_id ?>" class="<?= $row_class ?>">
+                                <td>
+                                    <?= htmlspecialchars($task->task_title) ?>
+                                    <?php if ($is_done): ?>
+                                        <span class="badge badge-success">Done</span>
+                                    <?php elseif ($is_late): ?>
+                                        <span class="badge badge-danger" style="background-color: #f38e96;">Late</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= nl2br(htmlspecialchars($task->task_body)) ?></td>
+                                <td><?= date('d/m/Y H:i', strtotime($task->created_at)) ?></td>
+                                <td><?= $task->due_date ?: '-' ?></td>
+                                <td><?= $task->image_count ?></td>
+
+                                <?php if ($can_edit): ?>
+                                    <td>
+                                        <?php if (!$is_done): ?>
+                                            <a href="<?= base_url("tasks/mark_as_done/{$task->project_id}/{$task->task_id}") ?>"
+                                                class="btn btn-primary btn-xs">Mark as done</a>
+                                        <?php else: ?>
+                                            <a href="<?= base_url("tasks/mark_as_un_done/{$task->project_id}/{$task->task_id}") ?>"
+                                                class="btn btn-primary btn-xs">Mark as un done</a>
+                                        <?php endif; ?>
+                                        <a href="<?= base_url("tasks/view/{$task->project_id}/{$task->task_id}") ?>"
+                                            class="btn btn-info btn-xs">View</a>
+                                        <a href="<?= base_url("tasks/delete/{$task->project_id}/{$task->task_id}") ?>"
+                                            class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')">Delete</a>
+                                    </td>
+                                <?php elseif ($project_permission === 'view'): ?>
+                                    <td>
+                                        <a href="<?= base_url("tasks/view/{$task->project_id}/{$task->task_id}") ?>"
+                                            class="btn btn-info btn-xs">View</a>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         <?php endif; ?>
 
     <?php else: ?>
@@ -147,6 +149,7 @@
 
         // אתחול DataTable למשימות
         var tasksTable = $('#tasks-table').DataTable({
+            "responsive": true,
             "order": [[0, 'asc']], // מיון ברירת מחדל לפי Task Title
             "pageLength": 10
         });
@@ -173,6 +176,10 @@
                     $('#task-message').html('<div class="alert alert-danger">' + response.message + '</div>');
                 }
             }, 'json');
+        });
+
+        $(document).on('click', '#cancel-add-task', function () {
+            $('#addTaskModal').html('');
         });
 
     });

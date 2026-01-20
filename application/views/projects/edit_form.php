@@ -8,7 +8,7 @@
     </div>
 <?php endif; ?>
 
-<?php echo form_open("projects/edit/{$project->project_id}"); ?>
+<?php echo form_open("projects/edit/{$project->project_id}", ['id' => 'edit-project-form', 'data-id' => $project->project_id]); ?>
 <div class="form-group">
     <label for="project_title">Project Title</label>
     <input type="text" name="project_title" id="project_title" class="form-control"
