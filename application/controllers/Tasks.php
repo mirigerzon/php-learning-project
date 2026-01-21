@@ -86,8 +86,6 @@ class Tasks extends CI_Controller
         $this->load->view('tasks/add_form', ['project_id' => $project_id]);
     }
 
-
-
     public function add_ajax($project_id)
     {
         $this->form_validation
@@ -114,24 +112,19 @@ class Tasks extends CI_Controller
         $this->Task_model->add_task($task_data);
         $task_id = $this->db->insert_id();
 
-        // מחזירים שורה מלאה
-        $row_html = '<tr id="task-' . $task_id . '" class="">';
-        $row_html .= '<td>' . htmlspecialchars($task_data['task_title']) . '</td>';
-        $row_html .= '<td>' . nl2br(htmlspecialchars($task_data['task_body'])) . '</td>';
-        $row_html .= '<td>' . date('d/m/Y H:i', strtotime($task_data['created_at'])) . '</td>';
-        $row_html .= '<td>' . ($task_data['due_date'] ?: '-') . '</td>';
-        $row_html .= '<td>0</td>'; // תמונות
-        $row_html .= '<td>
-        <a href="' . base_url("tasks/mark_as_done/{$project_id}/{$task_id}") . '" class="btn btn-primary btn-xs">Mark as done</a>
-        <a href="' . base_url("tasks/view/{$project_id}/{$task_id}") . '" class="btn btn-info btn-xs">View</a>
-        <a href="' . base_url("tasks/delete/{$project_id}/{$task_id}") . '" class="btn btn-danger btn-xs" onclick="return confirm(\'Are you sure?\')">Delete</a>
-    </td>';
-        $row_html .= '</tr>';
-
         echo json_encode([
             'success' => true,
-            'html' => $row_html
+            'task' => [
+                'task_id' => $task_id,
+                'task_title' => $task_data['task_title'],
+                'task_body' => $task_data['task_body'],
+                'created_at' => $task_data['created_at'],
+                'due_date' => $task_data['due_date'] ?: null,
+                'status' => $task_data['status'],
+                'project_id' => $project_id
+            ]
         ]);
+
     }
 
     public function edit($project_id, $task_id)

@@ -3,17 +3,23 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f7f7f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
         }
 
         .register-container {
+            width: 100%;
             max-width: 400px;
-            margin: 80px auto;
-            padding: 30px;
+            padding: 30px 25px;
             background: #fff;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -21,7 +27,8 @@
 
         .register-container h2 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-weight: 600;
         }
 
         .register-link {
@@ -32,6 +39,16 @@
         .error-msg {
             font-size: 0.875em;
             margin-top: 3px;
+        }
+
+        @media (max-width: 576px) {
+            .register-container {
+                padding: 20px 15px;
+            }
+
+            .register-container h2 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -53,7 +70,6 @@
 
         <?= form_open('users/register') ?>
 
-        <!-- First Name -->
         <div class="mb-3">
             <?= form_label('First Name') ?>
             <?= form_input([
@@ -65,7 +81,6 @@
             <?= form_error('first_name', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
-        <!-- Last Name -->
         <div class="mb-3">
             <?= form_label('Last Name') ?>
             <?= form_input([
@@ -77,7 +92,6 @@
             <?= form_error('last_name', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
-        <!-- Username -->
         <div class="mb-3">
             <?= form_label('Username') ?>
             <?= form_input([
@@ -89,7 +103,6 @@
             <?= form_error('username', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
-        <!-- Password -->
         <div class="mb-3">
             <?= form_label('Password') ?>
             <?= form_password([
@@ -100,8 +113,7 @@
             <?= form_error('password', '<div class="text-danger error-msg">', '</div>') ?>
         </div>
 
-        <!-- Submit button -->
-        <div class="d-grid gap-2">
+        <div class="d-grid">
             <?= form_submit([
                 'name' => 'submit',
                 'class' => 'btn btn-primary',
@@ -116,15 +128,15 @@
         </div>
     </div>
 
+    <script>
+        setTimeout(function () {
+            var flash = document.getElementById('flash-message');
+            if (flash) {
+                flash.style.display = 'none';
+            }
+        }, 4000);
+    </script>
+
 </body>
 
 </html>
-
-<script>
-    setTimeout(function () {
-        var flash = document.getElementById('flash-message');
-        if (flash) {
-            flash.style.display = 'none';
-        }
-    }, 4000);
-</script>

@@ -3,18 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <!-- קישור ל-Bootstrap -->
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f7f7f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
         }
 
         .login-container {
+            width: 100%;
             max-width: 400px;
-            margin: 80px auto;
-            padding: 30px;
+            padding: 30px 25px;
             background: #fff;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -22,12 +28,23 @@
 
         .login-container h2 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-weight: 600;
         }
 
         .register-link {
             text-align: center;
             margin-top: 15px;
+        }
+
+        @media (max-width: 576px) {
+            .login-container {
+                padding: 20px 15px;
+            }
+
+            .login-container h2 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -37,8 +54,9 @@
     <div class="login-container">
         <h2>Login</h2>
 
-        <?php if (isset($error))
-            echo '<div class="alert alert-danger">' . $error . '</div>'; ?>
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger"><?= $error ?></div>
+        <?php endif; ?>
 
         <?php echo form_open('users/login'); ?>
 
@@ -52,7 +70,7 @@
             <?php echo form_password(['name' => 'password', 'class' => 'form-control', 'placeholder' => 'Enter password']); ?>
         </div>
 
-        <div class="d-grid gap-2">
+        <div class="d-grid">
             <?php echo form_submit(['name' => 'submit', 'class' => 'btn btn-primary', 'value' => 'Login']); ?>
         </div>
 
