@@ -287,6 +287,36 @@
             });
         });
 
+        // SUBMIT SHARE FORM
+        $(document).on('submit', '#share-project-form', function (e) {
+            e.preventDefault();
+
+            let form = $(this);
+
+            $.ajax({
+                url: '<?= base_url("projects/share_ajax") ?>',
+                type: 'POST',
+                data: form.serialize(),
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        $('#shareProjectModal').modal('hide');
+
+                        // אופציונלי – הודעה
+                        alert('Project shared successfully');
+
+                        // אופציונלי – רענון טבלה / עמוד
+                        // location.reload();
+                    } else {
+                        alert(response.message || 'Something went wrong');
+                    }
+                },
+                error: function () {
+                    alert('Server error');
+                }
+            });
+        });
+
     });
 </script>
 

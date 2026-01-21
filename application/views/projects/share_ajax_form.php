@@ -6,7 +6,7 @@
             <tr>
                 <th>User</th>
                 <th>Current Role</th>
-                <th>Edit Role</th>
+                <th>Edit Role</th>]
             </tr>
         </thead>
         <tbody>
