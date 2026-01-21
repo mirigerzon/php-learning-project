@@ -301,12 +301,7 @@
                 success: function (response) {
                     if (response.success) {
                         $('#shareProjectModal').modal('hide');
-
-                        // אופציונלי – הודעה
                         alert('Project shared successfully');
-
-                        // אופציונלי – רענון טבלה / עמוד
-                        // location.reload();
                     } else {
                         alert(response.message || 'Something went wrong');
                     }
