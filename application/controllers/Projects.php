@@ -17,22 +17,30 @@ class Projects extends CI_Controller
     {
         $this->require_project_permission(null, 'view');
 
-        $projects = $this->Project_model
-            ->get_user_projects_with_status($this->session->userdata('user_id'));
+        $user_id = $this->session->userdata('user_id');
+        $projects = $this->Project_model->get_user_projects_with_status($user_id);
 
         foreach ($projects as $project) {
-            $project->shared_users =
-                $this->Project_model->get_project_shares($project->project_id);
+            $project->shared_users = $this->Project_model->get_project_shares($project->project_id);
+            if ((int) $project->user_id !== (int) $user_id) {
+                $user_share = array_filter($project->shared_users, function ($share) use ($user_id) {
+                    return (int) $share->user_id === (int) $user_id;
+                });
+                $project->user_role = !empty($user_share) ? array_values($user_share)[0]->role : null;
+            } else {
+                $project->user_role = 'owner';
+            }
         }
 
         $data = [
             'main_view' => 'projects/projects',
             'projects' => $projects,
-            'title' => 'Projects'
+            'title' => 'My App/Projects'
         ];
 
         $this->load->view('layouts/main', $data);
     }
+
 
     /* =======================
        ADD PROJECT
@@ -94,51 +102,27 @@ class Projects extends CI_Controller
             'created_at' => date('Y-m-d H:i:s')
         ]);
 
+        $insert_id = $this->db->insert_id();
+        // Build project payload for frontend
+        $project = [
+            'project_id' => $insert_id,
+            'project_title' => $this->input->post('project_title'),
+            'project_body' => $this->input->post('project_body'),
+            'task_count' => 0,
+            'project_status' => 'no missions'
+        ];
+
         echo json_encode([
             'success' => true,
-            'project_id' => $this->db->insert_id()
+            'project' => $project
         ]);
     }
 
     /* =======================
        EDIT PROJECT
        ======================= */
-    public function edit($id)
-    {
-        $this->require_project_permission($id, 'edit');
-
-        $project = $this->Project_model->get_project($id);
-        if (!$project) {
-            show_404();
-        }
-
-        $this->load->library('form_validation');
-        $this->form_validation->set_rules('project_title', 'Project Title', 'required');
-        $this->form_validation->set_rules('project_body', 'Project Description', 'required');
-
-        if ($this->form_validation->run() === FALSE) {
-            $data = [
-                'main_view' => 'projects/edit',
-                'title' => 'Edit Project',
-                'project' => $project
-            ];
-            $this->load->view('layouts/main', $data);
-            return;
-        }
-
-        $this->Project_model->update_project($id, [
-            'project_title' => $this->input->post('project_title'),
-            'project_body' => $this->input->post('project_body')
-        ]);
-
-        $this->session->set_flashdata('success', 'Project updated successfully!');
-        redirect('projects');
-    }
-
     public function edit_ajax_form($project_id)
     {
-        $this->require_project_permission($project_id, 'edit');
-
         $project = $this->Project_model->get_project($project_id);
         if (!$project) {
             echo 'Project not found.';
@@ -150,8 +134,6 @@ class Projects extends CI_Controller
 
     public function edit_ajax($project_id)
     {
-        $this->require_project_permission($project_id, 'edit');
-
         $this->load->library('form_validation');
         $this->form_validation->set_rules('project_title', 'Project Title', 'required');
         $this->form_validation->set_rules('project_body', 'Project Description', 'required');
@@ -169,15 +151,34 @@ class Projects extends CI_Controller
             'project_body' => $this->input->post('project_body')
         ]);
 
+        // Fetch updated project and task info for frontend
+        $project_row = $this->Project_model->get_project($project_id);
+        $task_count = (int) $this->db->where('project_id', $project_id)->count_all_results('tasks');
+        if ($task_count === 0) {
+            $project_status = 'no missions';
+        } else {
+            $has_open = (bool) $this->db->where('project_id', $project_id)->where('status', 0)->count_all_results('tasks');
+            $project_status = $has_open ? 'Open' : 'Closed';
+        }
+
+        $project = [
+            'project_id' => $project_row->project_id,
+            'project_title' => $project_row->project_title,
+            'project_body' => $project_row->project_body,
+            'task_count' => $task_count,
+            'project_status' => $project_status
+        ];
+
         echo json_encode([
-            'success' => true
+            'success' => true,
+            'project' => $project
         ]);
     }
 
     /* =======================
        DELETE PROJECT
        ======================= */
-    public function delete($id)
+    public function delete($id, $from = 'user')
     {
         $this->require_project_permission($id, 'edit');
 
@@ -188,93 +189,73 @@ class Projects extends CI_Controller
 
         $this->Project_model->delete_project($id);
         $this->session->set_flashdata('success', 'Project deleted successfully!');
-        redirect('projects');
+        redirect($from === 'admin' ? 'admin/projects' : 'projects');
     }
 
-    /* =======================
-       SHARE PROJECT
-       ======================= */
-    public function share_ajax_form($project_id = null)
-    {
-        $this->require_project_permission($project_id, 'edit');
 
-        if (!$project_id) {
-            show_error('Project ID missing');
-        }
 
-        $data['project_id'] = $project_id;
-        $data['users'] =
-            $this->Project_model->get_users_with_roles($project_id);
-
-        $this->load->view('projects/share_ajax_form', $data);
-    }
-
-    public function share_ajax()
-    {
-
-        $project_id = $this->input->post('project_id');
-        $this->require_project_permission($project_id, 'edit');
-
-        $roles = $this->input->post('roles');
-
-        if (!$project_id || !is_array($roles)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Missing data'
-            ]);
-            return;
-        }
-
-        foreach ($roles as $user_id => $role) {
-            $this->Project_model->share_project($project_id, $user_id, $role);
-        }
-
-        echo json_encode(['success' => true]);
-    }
-
-    private function require_project_permission($project_id = null, $required = 'view')
+    public function require_project_permission($project_id = null, $required = 'view')
     {
         $user_id = $this->session->userdata('user_id');
+
+        // לא מחובר
         if (!$user_id) {
-            show_error('Unauthorized', 401);
+            $this->deny_access();
         }
 
         $user = $this->User_model->get_by_id($user_id);
         if (!$user) {
-            show_error('Unauthorized', 401);
+            $this->deny_access();
         }
 
-        // אדמין – תמיד מותר
-        if ($user->is_admin && $user->project_permission === 'edit') {
-            return;
+        // אדמין גלובלי
+        if ((int) $user->is_admin === 1 && $user->project_permission === 'edit') {
+            return 'admin';
         }
 
-        // פעולות כלליות (רשימת פרויקטים, הוספה)
+        // פעולות כלליות (index, add)
         if ($project_id === null) {
-            return;
+            return 'view';
         }
 
-        // בדיקת בעלות
+        // בדיקת בעלות על הפרויקט
         $project = $this->Project_model->get_project($project_id);
         if (!$project) {
-            show_404();
+            $this->deny_access();
         }
 
-        if ($project->user_id == $user_id) {
-            return;
+        if ((int) $project->user_id === (int) $user_id) {
+            return 'admin';
         }
 
         // בדיקת שיתוף
-        $permission =
+        $share =
             $this->Project_model->get_user_project_permission($project_id, $user_id);
+        // אמור להחזיר 'viewer' / 'editor' / 'admin' / null
 
-        if (!$permission) {
-            show_error('Forbidden', 403);
+        if (!$share) {
+            $this->deny_access();
         }
 
-        if ($required === 'edit' && $permission !== 'edit') {
-            show_error('Forbidden', 403);
+        // בדיקת רמת הרשאה
+        if ($required === 'edit' && $share === 'viewer') {
+            $this->deny_access();
         }
+
+        return $share;
+    }
+
+    private function deny_access()
+    {
+        if ($this->input->is_ajax_request()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Forbidden'
+            ]);
+            exit;
+        }
+
+        show_error('Forbidden', 403);
     }
 
 

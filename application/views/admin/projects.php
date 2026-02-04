@@ -1,14 +1,11 @@
-<div class="projects-container">
-    <div class="projects-header">
-        <h2 class="projects-title">All Projects</h2>
-        <p class="projects-subtitle">Overview of all your projects and shared workspaces</p>
-    </div>
-
+<div class="admin-projects-container">
     <?php if ($this->session->flashdata('success')): ?>
         <div class="alert alert-success soft-alert">
             <?= $this->session->flashdata('success') ?>
         </div>
     <?php endif; ?>
+
+    <h2 class="title">All Projects</h2>
 
     <?php if (empty($projects)): ?>
         <div class="alert alert-info soft-alert">
@@ -59,13 +56,14 @@
 
                                 <td data-label="Actions">
                                     <div class="action-group">
-                                        <a href="<?= base_url('tasks/index/' . $p->project_id) ?>" class="btn-action btn-view">
+                                        <a href="<?= base_url('tasks/admin_view/' . $p->project_id) ?>"
+                                            class="btn-action btn-view">
                                             View
                                         </a>
 
                                         <?php if ($this->session->userdata('project_permission') === 'edit'): ?>
-                                            <a href="<?= base_url('projects/edit/' . $p->project_id) ?>"
-                                                class="btn-action btn-edit">
+                                            <a href="<?= base_url('projects/edit/' . $p->project_id) ?>" class="btn-action btn-edit"
+                                                data-id="<?= (int) $p->project_id ?>">
                                                 Edit
                                             </a>
 
@@ -74,7 +72,8 @@
                                                 Share
                                             </button>
 
-                                            <form method="post" action="<?= base_url('projects/delete/' . $p->project_id) ?>"
+                                            <form method="post"
+                                                action="<?= base_url('projects/delete/' . $p->project_id . '/admin') ?>"
                                                 onsubmit="return confirmDelete();">
                                                 <button type="submit" class="btn-action btn-delete">
                                                     Delete
@@ -90,186 +89,42 @@
             </div>
         </div>
     <?php endif; ?>
+
+    <div class="modal fade" id="shareProjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Share Project</h4>
+                </div>
+
+                <div class="modal-body" id="share-project-modal-body">
+                    <!-- ajax content -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="projectFormModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="projectFormModalTitle">Edit Project</h4>
+                </div>
+
+                <div class="modal-body" id="project-form-modal-body">
+                    <!-- ajax content -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
 </div>
 
-<style>
-    .projects-container {
-        max-width: 1200px;
-        margin: auto;
-        padding: 1.5rem;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont;
-        background: #f9fafb;
-        min-height: 100vh;
-    }
-
-    .projects-header {
-        margin-bottom: 1.5rem;
-    }
-
-    .projects-title {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #111827;
-    }
-
-    .projects-subtitle {
-        margin-top: 0.25rem;
-        color: #6b7280;
-        font-size: 0.95rem;
-    }
-
-    .soft-alert {
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-    }
-
-    .projects-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-
-    .table-wrapper {
-        overflow-x: auto;
-    }
-
-    .projects-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .projects-table thead {
-        background: #f3f4f6;
-    }
-
-    .projects-table th {
-        padding: 1rem;
-        text-align: left;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #374151;
-    }
-
-    .projects-table td {
-        padding: 1rem;
-        font-size: 1.05rem;
-        color: #1f2937;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle;
-    }
-
-    .projects-table tbody tr:hover {
-        background: #f9fafb;
-    }
-
-    .project-title {
-        color: #111827;
-        font-weight: 600;
-        font-size: 1.05rem;
-    }
-
-    .shared-badge {
-        display: inline-block;
-        padding: 0.25rem 0.6rem;
-        border-radius: 999px;
-        background: #e0e7ff;
-        color: #3730a3;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    /* Actions */
-    .action-group {
-        display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-    }
-
-    .btn-action {
-        padding: 0.35rem 0.7rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        border: 1px solid;
-        background: none;
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.2s ease;
-    }
-
-    .btn-view {
-        border-color: #d1d5db;
-        color: #374151;
-    }
-
-    .btn-edit {
-        border-color: #93c5fd;
-        color: #1e40af;
-    }
-
-    .btn-share {
-        border-color: #fde68a;
-        color: #92400e;
-    }
-
-    .btn-delete {
-        border-color: #fecaca;
-        color: #991b1b;
-    }
-
-    .btn-action:hover {
-        background: #f3f4f6;
-    }
-
-    /* 📱 Mobile Card Layout */
-    @media (max-width: 640px) {
-
-        .projects-container {
-            padding: 0.75rem;
-        }
-
-        .projects-table {
-            font-size: 0.9rem;
-            min-width: 720px;
-            /* מאפשר גלילה */
-        }
-
-        .projects-table th,
-        .projects-table td {
-            padding: 0.6rem 0.75rem;
-            white-space: nowrap;
-        }
-
-        .projects-table th {
-            font-size: 0.75rem;
-        }
-
-        .action-group {
-            flex-wrap: nowrap;
-            gap: 0.35rem;
-        }
-
-        .btn-action {
-            font-size: 0.8rem;
-            padding: 0.35rem 0.55rem;
-        }
-
-        .projects-title {
-            font-size: 1.5rem;
-        }
-
-        .projects-subtitle {
-            font-size: 0.95rem;
-        }
-    }
-</style>
-
-<script>
-    function confirmDelete() {
-        return confirm('Are you sure you want to delete this project? This action cannot be undone.');
-    }
-</script>
+<script src="<?= base_url('assets/js/admin-projects.js') ?>"></script>

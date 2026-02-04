@@ -1,142 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
+<div class="row">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title text-center panel-title-heading">Register</h3>
+            </div>
+            <div class="panel-body">
+                <div id="flash-message">
+                    <?php if ($this->session->flashdata('success')): ?>
+                        <div class="alert alert-success alert-dismissible" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                            <?= $this->session->flashdata('success') ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f7f7f7;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
-        }
+                <?php if (isset($error)): ?>
+                    <div class="alert alert-danger alert-dismissible" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <?= $error ?>
+                    </div>
+                <?php endif; ?>
 
-        .register-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 30px 25px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
+                <?= form_open('users/register') ?>
 
-        .register-container h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            font-weight: 600;
-        }
+                <div class="form-group">
+                    <?= form_label('First Name', 'first_name') ?>
+                    <?= form_input([
+                        'name' => 'first_name',
+                        'id' => 'first_name',
+                        'class' => 'form-control',
+                        'placeholder' => 'Enter first name',
+                        'value' => set_value('first_name'),
+                        'required' => 'required'
+                    ]) ?>
+                    <?= form_error('first_name', '<span class="help-block">', '</span>') ?>
+                </div>
 
-        .register-link {
-            text-align: center;
-            margin-top: 15px;
-        }
+                <div class="form-group">
+                    <?= form_label('Last Name', 'last_name') ?>
+                    <?= form_input([
+                        'name' => 'last_name',
+                        'id' => 'last_name',
+                        'class' => 'form-control',
+                        'placeholder' => 'Enter last name',
+                        'value' => set_value('last_name'),
+                        'required' => 'required'
+                    ]) ?>
+                    <?= form_error('last_name', '<span class="help-block">', '</span>') ?>
+                </div>
 
-        .error-msg {
-            font-size: 0.875em;
-            margin-top: 3px;
-        }
+                <div class="form-group">
+                    <?= form_label('Username', 'username') ?>
+                    <?= form_input([
+                        'name' => 'username',
+                        'id' => 'username',
+                        'class' => 'form-control',
+                        'placeholder' => 'Enter username',
+                        'value' => set_value('username'),
+                        'required' => 'required'
+                    ]) ?>
+                    <?= form_error('username', '<span class="help-block">', '</span>') ?>
+                </div>
 
-        @media (max-width: 576px) {
-            .register-container {
-                padding: 20px 15px;
-            }
+                <div class="form-group">
+                    <?= form_label('Password', 'password') ?>
+                    <?= form_password([
+                        'name' => 'password',
+                        'id' => 'password',
+                        'class' => 'form-control',
+                        'placeholder' => 'Enter password',
+                        'required' => 'required'
+                    ]) ?>
+                    <?= form_error('password', '<span class="help-block">', '</span>') ?>
+                </div>
 
-            .register-container h2 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
-</head>
+                <div class="form-group">
+                    <?= form_submit([
+                        'name' => 'submit',
+                        'class' => 'btn btn-primary btn-block',
+                        'value' => 'Register'
+                    ]) ?>
+                </div>
 
-<body>
+                <?= form_close() ?>
 
-    <div class="register-container">
-        <h2>Register</h2>
-
-        <div id="flash-message">
-            <?php if ($this->session->flashdata('success')): ?>
-                <div class="alert alert-success"><?= $this->session->flashdata('success') ?></div>
-            <?php endif; ?>
-        </div>
-
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger"><?= $error ?></div>
-        <?php endif; ?>
-
-        <?= form_open('users/register') ?>
-
-        <div class="mb-3">
-            <?= form_label('First Name') ?>
-            <?= form_input([
-                'name' => 'first_name',
-                'class' => 'form-control',
-                'placeholder' => 'Enter first name',
-                'value' => set_value('first_name')
-            ]) ?>
-            <?= form_error('first_name', '<div class="text-danger error-msg">', '</div>') ?>
-        </div>
-
-        <div class="mb-3">
-            <?= form_label('Last Name') ?>
-            <?= form_input([
-                'name' => 'last_name',
-                'class' => 'form-control',
-                'placeholder' => 'Enter last name',
-                'value' => set_value('last_name')
-            ]) ?>
-            <?= form_error('last_name', '<div class="text-danger error-msg">', '</div>') ?>
-        </div>
-
-        <div class="mb-3">
-            <?= form_label('Username') ?>
-            <?= form_input([
-                'name' => 'username',
-                'class' => 'form-control',
-                'placeholder' => 'Enter username',
-                'value' => set_value('username')
-            ]) ?>
-            <?= form_error('username', '<div class="text-danger error-msg">', '</div>') ?>
-        </div>
-
-        <div class="mb-3">
-            <?= form_label('Password') ?>
-            <?= form_password([
-                'name' => 'password',
-                'class' => 'form-control',
-                'placeholder' => 'Enter password'
-            ]) ?>
-            <?= form_error('password', '<div class="text-danger error-msg">', '</div>') ?>
-        </div>
-
-        <div class="d-grid">
-            <?= form_submit([
-                'name' => 'submit',
-                'class' => 'btn btn-primary',
-                'value' => 'Register'
-            ]) ?>
-        </div>
-
-        <?= form_close() ?>
-
-        <div class="register-link">
-            <p>Already have an account? <a href="<?= base_url('users/login') ?>">Login here</a></p>
+                <hr>
+                <p class="text-center no-margin">
+                    Already have an account? <a href="<?= base_url('users/login') ?>">Login here</a>
+                </p>
+            </div>
         </div>
     </div>
-
-    <script>
-        setTimeout(function () {
-            var flash = document.getElementById('flash-message');
-            if (flash) {
-                flash.style.display = 'none';
-            }
-        }, 4000);
-    </script>
-
-</body>
-
-</html>
+</div>

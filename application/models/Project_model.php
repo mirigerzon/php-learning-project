@@ -20,24 +20,19 @@ class Project_model extends CI_Model
     {
         $sql = "
         SELECT p.*, 
+            COUNT(t.task_id) AS task_count,
             CASE 
-                WHEN EXISTS (
-                    SELECT 1 
-                    FROM tasks t 
-                    WHERE t.project_id = p.project_id AND t.status = 0
-                ) THEN 'Open'
+                WHEN COUNT(t.task_id) = 0 THEN 'no missions'
+                WHEN EXISTS (SELECT 1 FROM tasks t2 WHERE t2.project_id = p.project_id AND t2.status = 0) THEN 'Open'
                 ELSE 'Closed'
             END AS project_status
         FROM projects p
-        WHERE p.user_id = ? OR EXISTS (
-            SELECT 1 
-            FROM project_shares ps 
-            WHERE ps.project_id = p.project_id AND ps.user_id = ?
-        )
+        LEFT JOIN tasks t ON t.project_id = p.project_id
+        WHERE p.user_id = ?
+        GROUP BY p.project_id
         ORDER BY p.created_at DESC
     ";
-
-        return $this->db->query($sql, [$user_id, $user_id])->result();
+        return $this->db->query($sql, [$user_id])->result();
     }
 
     public function get_project($project_id)
@@ -110,13 +105,12 @@ class Project_model extends CI_Model
 
     public function get_shared_projects_for_user($user_id)
     {
-        $this->db->select('p.project_id, p.project_title, p.project_body, p.user_id AS owner_id, ps.role');
+        $this->db->select('p.project_id, p.project_title, p.project_body, p.user_id AS owner_id, ps.role AS user_role');
         $this->db->from('project_shares ps');
         $this->db->join('projects p', 'p.project_id = ps.project_id');
         $this->db->where('ps.user_id', $user_id);
         return $this->db->get()->result_array();
     }
-
 
     public function get_users_with_roles($project_id)
     {
@@ -189,6 +183,18 @@ class Project_model extends CI_Model
         $this->db->join('users u', 'u.user_id = p.user_id', 'left');
         $this->db->order_by('p.created_at', 'DESC');
         return $this->db->get()->result();
+    }
+
+    public function get_user_project_permission($project_id, $user_id)
+    {
+        return $this->db
+            ->select('role')
+            ->from('project_shares')
+            ->where('project_id', $project_id)
+            ->where('user_id', $user_id)
+            ->limit(1)
+            ->get()
+            ->row('role'); // מחזיר string או null
     }
 
 }

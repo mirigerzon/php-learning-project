@@ -21,6 +21,5 @@
 </div>
 
 <button type="submit" class="btn btn-success">Save</button>
-<button type="button" class="btn btn-secondary" id="cancel-edit-task">Cancel</button>
 
 <?php echo form_close(); ?>

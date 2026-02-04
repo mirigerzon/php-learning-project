@@ -6,13 +6,16 @@ class Users extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->library(['session', 'form_validation']);
+        $this->load->library('form_validation');
         $this->load->helper(['form', 'url']);
         $this->load->model('User_model');
     }
 
+    // --- LOGIN ---
     public function login()
     {
+        $data = []; // נתונים שנשלחים ל-view
+
         if ($this->input->post()) {
             $username = $this->input->post('username');
             $password = $this->input->post('password');
@@ -29,15 +32,19 @@ class Users extends CI_Controller
                 redirect('home');
             } else {
                 $data['error'] = "Username or password is incorrect";
-                $this->load->view('users/login_view', $data);
             }
-        } else {
-            $this->load->view('users/login_view');
         }
+
+        $data['main_view'] = 'users/login_view';
+        $data['title'] = 'Login';
+        $this->load->view('layouts/main', $data);
     }
 
+    // --- REGISTER ---
     public function register()
     {
+        $data = [];
+
         $this->form_validation->set_rules('first_name', 'First Name', 'required', [
             'required' => 'The %s field is required.'
         ]);
@@ -56,12 +63,8 @@ class Users extends CI_Controller
             'min_length' => 'The %s must be at least 6 characters long.'
         ]);
 
-        if ($this->form_validation->run() === FALSE) {
-            // Load the form with validation errors
-            $this->load->view('users/register_view');
-        } else {
-            // Save the user to the database
-            $data = [
+        if ($this->form_validation->run() === TRUE) {
+            $userData = [
                 'first_name' => $this->input->post('first_name'),
                 'last_name' => $this->input->post('last_name'),
                 'username' => $this->input->post('username'),
@@ -69,12 +72,17 @@ class Users extends CI_Controller
                 'created_at' => date('Y-m-d H:i:s')
             ];
 
-            $this->User_model->create_user($data);
+            $this->User_model->create_user($userData);
             $this->session->set_flashdata('success', 'Registration successful! You can now log in.');
             redirect('home');
         }
+
+        $data['main_view'] = 'users/register_view';
+        $data['title'] = 'Register';
+        $this->load->view('layouts/main', $data);
     }
 
+    // --- LOGOUT ---
     public function logout()
     {
         $this->session->sess_destroy();

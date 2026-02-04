@@ -6,13 +6,12 @@ class Dashboard extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('session');
         $this->load->model('Project_model');
         $this->load->model('Task_model');
 
         // רק משתמשים מחוברים
         if (!$this->session->userdata('user_id')) {
-            show_error('Unauthorized', 403);
+            return;
         }
     }
 
@@ -26,7 +25,7 @@ class Dashboard extends CI_Controller
         // משימות של המשתמש לפי סטטוס
         $data['my_tasks'] = $this->Task_model->get_task_counts_by_status($user_id);
 
-        $data['title'] = 'My Dashboard';
+        $data['title'] = 'My App/Dashboard';
         $data['main_view'] = 'dashboard/user_dashboard';
 
         $this->load->view('layouts/main', $data);

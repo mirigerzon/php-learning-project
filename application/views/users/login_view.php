@@ -1,86 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
+<div class="row">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title text-center panel-title-heading">Login</h3>
+            </div>
+            <div class="panel-body">
+                <?php if (isset($error)): ?>
+                    <div class="alert alert-danger alert-dismissible" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <?= $error ?>
+                    </div>
+                <?php endif; ?>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f7f7f7;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
-        }
+                <?php echo form_open('users/login'); ?>
 
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 30px 25px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
+                <div class="form-group">
+                    <?php echo form_label('Username', 'username'); ?>
+                    <?php echo form_input(['name' => 'username', 'id' => 'username', 'class' => 'form-control', 'placeholder' => 'Enter username', 'required' => 'required']); ?>
+                </div>
 
-        .login-container h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            font-weight: 600;
-        }
+                <div class="form-group">
+                    <?php echo form_label('Password', 'password'); ?>
+                    <?php echo form_password(['name' => 'password', 'id' => 'password', 'class' => 'form-control', 'placeholder' => 'Enter password', 'required' => 'required']); ?>
+                </div>
 
-        .register-link {
-            text-align: center;
-            margin-top: 15px;
-        }
+                <div class="form-group">
+                    <?php echo form_submit(['name' => 'submit', 'class' => 'btn btn-primary btn-block', 'value' => 'Login']); ?>
+                </div>
 
-        @media (max-width: 576px) {
-            .login-container {
-                padding: 20px 15px;
-            }
+                <?php echo form_close(); ?>
 
-            .login-container h2 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="login-container">
-        <h2>Login</h2>
-
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger"><?= $error ?></div>
-        <?php endif; ?>
-
-        <?php echo form_open('users/login'); ?>
-
-        <div class="mb-3">
-            <?php echo form_label('Username'); ?>
-            <?php echo form_input(['name' => 'username', 'class' => 'form-control', 'placeholder' => 'Enter username']); ?>
-        </div>
-
-        <div class="mb-3">
-            <?php echo form_label('Password'); ?>
-            <?php echo form_password(['name' => 'password', 'class' => 'form-control', 'placeholder' => 'Enter password']); ?>
-        </div>
-
-        <div class="d-grid">
-            <?php echo form_submit(['name' => 'submit', 'class' => 'btn btn-primary', 'value' => 'Login']); ?>
-        </div>
-
-        <?php echo form_close(); ?>
-
-        <div class="register-link">
-            <p>Don't have an account? <a href="<?= base_url('users/register') ?>">Register here</a></p>
+                <hr>
+                <p class="text-center no-margin">
+                    Don't have an account? <a href="<?= base_url('users/register') ?>">Register here</a>
+                </p>
+            </div>
         </div>
     </div>
-
-</body>
-
-</html>
+</div>

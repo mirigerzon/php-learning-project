@@ -6,7 +6,6 @@ class Admin_Dashboard extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('session');
         $this->load->model('Project_model');
         $this->load->model('Task_model');
         $this->load->model('User_model');
@@ -25,8 +24,8 @@ class Admin_Dashboard extends CI_Controller
         $data['projects_per_user'] = $this->Project_model->get_count_per_user();
         $data['tasks_status'] = $this->Task_model->get_status_counts();
         $data['tasks_per_user'] = $this->Task_model->get_count_per_user_with_due();
-        $data['title'] = 'Admin Dashboard';
-        
+        $data['title'] = 'My App/Admin Dashboard';
+
         $data['main_view'] = 'dashboard/admin_dshboard';
 
         $this->load->view('layouts/main', $data);

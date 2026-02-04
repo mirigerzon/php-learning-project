@@ -6,7 +6,6 @@ class Admin extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('session');
         $this->load->model('User_model');
         $this->load->model('Project_model');
         $this->load->model('Task_model');
@@ -23,7 +22,7 @@ class Admin extends CI_Controller
     public function index()
     {
         $data['users'] = $this->User_model->get_all_with_project_stats();
-        $data['title'] = 'Admin - Users';
+        $data['title'] = 'My App/Users Control';
         $data['main_view'] = 'admin/users';
         $this->load->view('layouts/main', $data);
     }
@@ -151,7 +150,7 @@ class Admin extends CI_Controller
         $data = [
             'main_view' => 'admin/projects',
             'projects' => $projects,
-            'title' => 'Admin - Projects'
+            'title' => 'My App/Users Projects',
         ];
 
         $this->load->view('layouts/main', $data);
@@ -177,6 +176,10 @@ class Admin extends CI_Controller
 
         // שמירה במודל
         $this->User_model->set_project_permission($user_id, $permission);
+
+        if ($user_id == $this->session->userdata('user_id')) {
+            $this->session->set_userdata('project_permission', $permission);
+        }
 
         echo json_encode(['success' => true]);
     }

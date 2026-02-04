@@ -9,7 +9,7 @@ class Tasks extends CI_Controller
 
         $this->load->model('Task_model');
         $this->load->model('Project_model');
-        $this->load->library(['session', 'form_validation']);
+        $this->load->library('form_validation');
 
         // בדיקת התחברות בסיסית
         if (!$this->session->user_id) {
@@ -20,8 +20,15 @@ class Tasks extends CI_Controller
     public function index($project_id)
     {
         $status_filter = $this->input->get('status');
-        $tasks = $this->Task_model->get_project_tasks($project_id, $status_filter);
+        $from = $this->input->get('from') ?? 'projects';
+        $user_id = $this->session->user_id;
+
+        $tasks = $this->Task_model->get_project_tasks($project_id, $user_id, $from, $status_filter);
         $project = $this->Project_model->get_project($project_id);
+
+        // קבלת הרשאה של המשתמש לפרויקט
+        $user_role = $this->Project_model->get_user_project_permission($project_id, $user_id);
+        $project->user_role = $user_role;
 
         foreach ($tasks as $task) {
             $task->image_count = $this->Task_model->count_task_images($task->task_id);
@@ -32,11 +39,14 @@ class Tasks extends CI_Controller
             'tasks' => $tasks,
             'project' => $project,
             'project_id' => $project_id,
-            'status_filter' => $status_filter
+            'status_filter' => $status_filter,
+            'from' => $from
         ];
 
         $this->load->view('layouts/main', $data);
     }
+
+
 
     public function view($project_id, $task_id)
     {
@@ -68,13 +78,23 @@ class Tasks extends CI_Controller
             return;
         }
 
-        $this->Task_model->add_task([
+        // 1. הוספת המשימה לטבלת tasks
+        $task_id = $this->Task_model->add_task([
             'project_id' => $project_id,
             'task_title' => $this->input->post('task_title'),
             'task_body' => $this->input->post('task_body'),
             'due_date' => $this->input->post('task_due_date') ?: null,
             'status' => 0,
             'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // 2. הוספת הרשומה שלך (המנהל/יוצר) לטבלת task_assignees
+        $user_id = $this->session->user_id;
+        $this->Task_model->add_task_assignee([
+            'task_id' => $task_id,
+            'user_id' => $user_id,
+            'is_done' => 0,
+            'done_at' => null
         ]);
 
         $this->session->set_flashdata('success', 'Task added successfully!');
@@ -109,8 +129,7 @@ class Tasks extends CI_Controller
             'created_at' => date('Y-m-d H:i:s')
         ];
 
-        $this->Task_model->add_task($task_data);
-        $task_id = $this->db->insert_id();
+        $task_id = $this->Task_model->add_task($task_data);
 
         echo json_encode([
             'success' => true,
@@ -202,16 +221,43 @@ class Tasks extends CI_Controller
 
     public function mark_as_done($project_id, $task_id)
     {
-        $this->Task_model->mark_as_done($project_id, $task_id);
+        $this->Task_model->set_task_status($project_id, $task_id, 1);
         $this->session->set_flashdata('success', 'Task marked as done!');
         redirect("tasks/index/{$project_id}");
     }
 
     public function mark_as_un_done($project_id, $task_id)
     {
-        $this->Task_model->mark_as_un_done($project_id, $task_id);
+        $this->Task_model->set_task_status($project_id, $task_id, 0);
         $this->session->set_flashdata('success', 'Task marked as pending!');
         redirect("tasks/index/{$project_id}");
+    }
+
+    public function mark_as_done_for_user($task_id)
+    {
+        $user_id = $this->input->get('user_id');
+        if (!$user_id)
+            show_error('User not specified', 400);
+
+        // מסמן את המשימה ב-task_assignees
+        $this->load->model('Task_model');
+        $this->Task_model->set_task_status_for_user($task_id, $user_id, 1);
+
+        $this->session->set_flashdata('success', 'Task marked as done for you!');
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    public function mark_as_undone_for_user($task_id)
+    {
+        $user_id = $this->input->get('user_id');
+        if (!$user_id)
+            show_error('User not specified', 400);
+
+        $this->load->model('Task_model');
+        $this->Task_model->set_task_status_for_user($task_id, $user_id, 0);
+
+        $this->session->set_flashdata('success', 'Task marked as pending for you!');
+        redirect($_SERVER['HTTP_REFERER']);
     }
 
     public function upload_images()
@@ -272,4 +318,65 @@ class Tasks extends CI_Controller
         $this->session->set_flashdata('success', 'Due date updated successfully!');
         redirect("tasks/view/{$project_id}/{$task_id}");
     }
+
+    public function admin_view($project_id)
+    {
+        if (
+            !$this->session->userdata('user_id') ||
+            !$this->session->userdata('is_admin')
+        ) {
+            show_error('Unauthorized', 403);
+        }
+
+        $project = $this->Project_model->get_project($project_id);
+        if (!$project) {
+            show_404();
+        }
+
+        $tasks = $this->Task_model->get_project_tasks($project_id);
+
+        $data = [
+            'project' => $project,
+            'tasks' => $tasks,
+            'main_view' => 'tasks/admin_view',
+            'title' => 'Admin – Project Overview'
+        ];
+
+        $this->load->view('layouts/main', $data);
+    }
+
+    public function get_tasks_for_user($project_id = null, $user_id = null)
+    {
+        if (!$project_id || !$user_id)
+            show_404();
+
+        $tasks = $this->Task_model->get_project_tasks($project_id);
+        $assigned_tasks = $this->Task_model->get_assigned_task_ids($user_id, $project_id);
+
+        foreach ($tasks as $task) {
+            $checked = in_array($task->task_id, $assigned_tasks) ? 'checked' : '';
+            $task_id = htmlspecialchars($task->task_id);
+            $task_title = htmlspecialchars($task->task_title);
+
+            echo '<div class="form-check">';
+            echo '<input class="form-check-input" type="checkbox" name="tasks[]" id="task_' . $task_id . '" value="' . $task_id . '" ' . $checked . '>';
+            echo '<label class="form-check-label" for="task_' . $task_id . '">' . $task_title . '</label>';
+            echo '</div>';
+        }
+    }
+
+
+
+    // AJAX – שמירה של המשימות שהוקצו למשתמש
+    public function save_assigned_tasks()
+    {
+        $user_id = $this->input->post('user_id');
+        $project_id = $this->input->post('project_id');
+        $task_ids = $this->input->post('tasks');
+
+        $this->Task_model->update_user_tasks($user_id, $project_id, $task_ids ?? []);
+
+        echo json_encode(['status' => 'success']);
+    }
+
 }
