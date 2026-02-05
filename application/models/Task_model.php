@@ -60,12 +60,6 @@ class Task_model extends CI_Model
             ->row();
     }
 
-    public function add_task($data)
-    {
-        $this->db->insert('tasks', $data);
-        return $this->db->insert_id();
-    }
-
     public function set_task_status($project_id, $task_id, $status)
     {
         $status = ($status == 1) ? 1 : 0;
@@ -269,10 +263,45 @@ class Task_model extends CI_Model
         }
     }
 
-    public function add_task_assignee($data)
+    public function create_task_with_creator($project_id, $user_id, $task_input)
     {
-        return $this->db->insert('task_assignees', $data);
+        $this->db->trans_start();
+
+        $task_data = [
+            'project_id' => $project_id,
+            'task_title' => $task_input['task_title'],
+            'task_body' => $task_input['task_body'],
+            'due_date' => $task_input['due_date'],
+            'status' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->insert('tasks', $task_data);
+        $task_id = $this->db->insert_id();
+
+        $this->db->insert('task_assignees', [
+            'task_id' => $task_id,
+            'user_id' => $user_id,
+            'is_done' => 0,
+            'done_at' => null
+        ]);
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            return false;
+        }
+
+        return [
+            'task_id' => $task_id,
+            'task_title' => $task_data['task_title'],
+            'task_body' => $task_data['task_body'],
+            'created_at' => $task_data['created_at'],
+            'due_date' => $task_data['due_date'],
+            'status' => 0,
+        ];
     }
+
 
     public function is_task_done_by_all($task_id)
     {

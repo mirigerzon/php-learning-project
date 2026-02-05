@@ -46,8 +46,6 @@ class Tasks extends CI_Controller
         $this->load->view('layouts/main', $data);
     }
 
-
-
     public function view($project_id, $task_id)
     {
         $task = $this->Task_model->get_task_by_id($task_id);
@@ -120,30 +118,31 @@ class Tasks extends CI_Controller
             return;
         }
 
-        $task_data = [
-            'project_id' => $project_id,
-            'task_title' => $this->input->post('task_title'),
-            'task_body' => $this->input->post('task_body'),
-            'due_date' => $this->input->post('task_due_date') ?: null,
-            'status' => 0,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
+        $task = $this->Task_model->create_task_with_creator(
+            $project_id,
+            $this->session->user_id,
+            [
+                'task_title' => $this->input->post('task_title'),
+                'task_body' => $this->input->post('task_body'),
+                'due_date' => $this->input->post('task_due_date') ?: null,
+            ]
+        );
 
-        $task_id = $this->Task_model->add_task($task_data);
+        if ($task === false) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to create task'
+            ]);
+            return;
+        }
 
         echo json_encode([
             'success' => true,
-            'task' => [
-                'task_id' => $task_id,
-                'task_title' => $task_data['task_title'],
-                'task_body' => $task_data['task_body'],
-                'created_at' => $task_data['created_at'],
-                'due_date' => $task_data['due_date'] ?: null,
-                'status' => $task_data['status'],
-                'project_id' => $project_id
-            ]
+            'task' => array_merge(
+                $task,
+                ['project_id' => $project_id]
+            )
         ]);
-
     }
 
     public function edit($project_id, $task_id)
