@@ -480,6 +480,7 @@ input[type="button"],
 }
 
 .alert-warning {
+    margin-top: 5vh;
     background-color: var(--warning-light);
     color: #92400e;
     border-color: var(--warning-color);

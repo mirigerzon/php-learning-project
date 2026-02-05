@@ -1,7 +1,7 @@
 <?php if (!$this->session->user_id): ?>
-    <div class="alert alert-danger text-center alert-large">
-        <h4>OOPS - it seems like you are not logged in.</h4>
-        <p>Please log in <a href="<?= base_url('users/login') ?>">here</a>.</p>
+    <div class="alert alert-warning">
+        OOPS - it seems like you are not logged in. Please log in
+        <a href="<?= base_url('users/login') ?>">here</a>.
     </div>
 <?php else: ?>
     <?php
@@ -9,7 +9,7 @@
     $project_permission = $this->session->userdata('project_permission') ?? null;
     $project_owner_id = $project->user_id ?? null;
     $can_edit = $user_id == $project_owner_id || $project_permission === 'edit' || $project_permission === 'admin' || $project->user_role === 'editor' || $project->user_role === 'admin';
-    $can_view = $can_edit || $project_permission === 'view'; 
+    $can_view = $can_edit || $project_permission === 'view';
     ?>
     <?php if ($can_view): ?>
         <script>

@@ -15,7 +15,16 @@ class Projects extends CI_Controller
        ======================= */
     public function index()
     {
-        $this->require_project_permission(null, 'view');
+        $permission = $this->require_project_permission(null, 'view');
+        if ($permission === false) {
+            $data = [
+                'main_view' => 'projects/projects',
+                'not_logged_in' => true,
+                'title' => 'My App/Projects'
+            ];
+            $this->load->view('layouts/main', $data);
+            return;
+        }
 
         $user_id = $this->session->userdata('user_id');
         $projects = $this->Project_model->get_user_projects_with_status($user_id);
@@ -200,12 +209,14 @@ class Projects extends CI_Controller
 
         // לא מחובר
         if (!$user_id) {
-            $this->deny_access();
+            return false;
+
         }
 
         $user = $this->User_model->get_by_id($user_id);
         if (!$user) {
-            $this->deny_access();
+            return false;
+
         }
 
         // אדמין גלובלי
@@ -221,7 +232,8 @@ class Projects extends CI_Controller
         // בדיקת בעלות על הפרויקט
         $project = $this->Project_model->get_project($project_id);
         if (!$project) {
-            $this->deny_access();
+            return false;
+
         }
 
         if ((int) $project->user_id === (int) $user_id) {
@@ -234,12 +246,13 @@ class Projects extends CI_Controller
         // אמור להחזיר 'viewer' / 'editor' / 'admin' / null
 
         if (!$share) {
-            $this->deny_access();
+            return false;
         }
 
         // בדיקת רמת הרשאה
         if ($required === 'edit' && $share === 'viewer') {
-            $this->deny_access();
+            return false;
+
         }
 
         return $share;
@@ -254,9 +267,5 @@ class Projects extends CI_Controller
             ]);
             exit;
         }
-
-        show_error('Forbidden', 403);
     }
-
-
 }

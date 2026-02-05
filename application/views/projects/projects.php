@@ -1,8 +1,8 @@
 <?php if (!$this->session->user_id): ?>
-    <h2 class="un_loged_in_message text-center">
-        OOPS - it seems like you are not logged in.
-        Please log in <a href="<?= base_url('users/login') ?>">here</a>.
-    </h2>
+    <div class="alert alert-warning">
+        OOPS - it seems like you are not logged in. Please log in
+        <a href="<?= base_url('users/login') ?>">here</a>.
+    </div>
 <?php else: ?>
 
     <div class="projects-container">
